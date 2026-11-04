@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Azulejo: jogo de quebra-cabeça com azulejos. Encaixe peças no painel 8×8 e limpe linhas e colunas.">
+<meta name="theme-color" content="#efe4d2">
+<title>Azulejo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Figtree:wght@400;600;800&display=swap">
+<style>
+/* Layout: one column, score strip on top, square glazed board, tray of three tiles below. Single deliberate look: sun-baked grout and glazed ceramic. */
+:root{
+  --grout:#efe4d2;      /* page / argamassa */
+  --grout-deep:#ddcdb4; /* empty cells */
+  --kiln:#3b2a1e;       /* text */
+  --cobalt:#1f4fa3;     /* accent */
+  --ochre:#d39a2a;
+  --glaze:#fffaf1;
+  --font-display:"Bagel Fat One","Arial Rounded MT Bold",system-ui,sans-serif;
+  --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--grout);color:var(--kiln);font-family:var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px;box-sizing:border-box;overflow:hidden;user-select:none;-webkit-user-select:none}
+.wrap{max-width:460px;margin:0 auto;height:100%;display:flex;flex-direction:column;gap:10px}
+header{display:flex;min-width:0;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--font-display);font-weight:400;font-size:1.9rem;margin:0;color:var(--cobalt);letter-spacing:.01em;line-height:1}
+.stats{display:flex;gap:16px;align-items:flex-end}
+.stat{display:flex;flex-direction:column;align-items:flex-end}
+.stat span{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:600;opacity:.65}
+.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.05}
+.stat.best b{color:var(--ochre)}
+button.icon{border:0;background:var(--grout-deep);color:var(--kiln);border-radius:10px;width:38px;height:38px;font:600 1rem var(--font-body);cursor:pointer}
+@media (max-width:400px){h1{font-size:1.45rem}.stats{gap:10px}.stat b{font-size:1.2rem}.stat span{font-size:.6rem;letter-spacing:.08em}button.icon{width:34px;height:34px}}
+button:focus-visible{outline:3px solid var(--cobalt);outline-offset:2px}
+.stage{flex:1;min-height:0;position:relative;display:flex;justify-content:center}
+canvas{touch-action:none;display:block;max-width:100%}
+.hint{text-align:center;font-size:.82rem;opacity:.6;margin:0}
+.over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,228,210,.82);backdrop-filter:blur(3px);border-radius:18px}
+.card{background:var(--glaze);border:3px solid var(--cobalt);border-radius:18px;padding:24px 28px;text-align:center;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 0 var(--cobalt)}
+.card h2{font-family:var(--font-display);font-weight:400;font-size:1.8rem;margin:0;color:var(--cobalt)}
+.card p{margin:0}
+.card .big{font-family:var(--font-display);font-size:2.6rem;font-variant-numeric:tabular-nums}
+.play{margin-top:8px;border:0;background:var(--cobalt);color:var(--glaze);font:800 1rem var(--font-body);padding:12px 22px;border-radius:12px;cursor:pointer;box-shadow:0 4px 0 #12306a}
+.play:active{transform:translateY(2px);box-shadow:0 2px 0 #12306a}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Azulejo</h1>
+    <div class="stats">
+      <div class="stat"><span>Pontos</span><b id="score">0</b></div>
+      <div class="stat best"><span>Recorde</span><b id="best">0</b></div>
+      <button class="icon" id="sound" aria-label="Ligar som" title="Som">♪</button>
+      <button class="icon" id="restart" aria-label="Recomeçar" title="Recomeçar">↻</button>
+    </div>
+  </header>
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+    <div class="over" id="over" hidden>
+      <div class="card">
+        <h2>Sem espaço!</h2>
+        <p>Sua pontuação</p>
+        <div class="big" id="final">0</div>
+        <p id="finalBest"></p>
+        <button class="play" id="again">Jogar de novo</button>
+      </div>
+    </div>
+  </div>
+  <p class="hint">Arraste os azulejos para o painel. Complete linhas ou colunas para limpar.</p>
+</div>
+
+<script src="logic.js"></script>
+<script>
+(()=>{
+const L_=window.AzulejoLogic;
+const {N,SHAPE_DATA,canPlace,fitsAnywhere,linesFor}=L_;
+const COLORS=[
+  {base:'#1f4fa3',dark:'#143a7d',light:'#5b85d1'}, // cobalto
+  {base:'#d39a2a',dark:'#a7741a',light:'#f0c46a'}, // ocre
+  {base:'#5d8a3a',dark:'#436a28',light:'#93bd6c'}, // oliva
+  {base:'#9b2f45',dark:'#741f32',light:'#cf6a7e'}, // vinho
+  {base:'#2f8f8a',dark:'#1f6d69',light:'#6cc2bc'}, // turquesa
+  {base:'#6a4a9a',dark:'#4e3476',light:'#9c80c8'}, // ameixa
+];
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const stage=document.getElementById('stage');
+const $score=document.getElementById('score'),$best=document.getElementById('best');
+const $over=document.getElementById('over'),$final=document.getElementById('final'),$finalBest=document.getElementById('finalBest');
+
+let st; // game state
+let best=0; try{best=+localStorage.getItem('azulejo-best')||0}catch(e){}
+let L={}; // layout
+let drag=null, anims=[], pops=[], soundOn=false, audio=null;
+
+function newState(){return L_.newState()}
+function deal(){L_.deal(st)}
+function showOver(){
+  setTimeout(()=>{$final.textContent=st.score;$finalBest.textContent=st.score>=best&&st.score>0?'Novo recorde!':'Recorde: '+best;$over.hidden=false;tone(196,.25,'triangle')},450);
+}
+function place(idx,gx,gy){
+  const sd=SHAPE_DATA[st.tray[idx].s];
+  const res=L_.place(st,idx,gx,gy);
+  if(!res)return;
+  const now=performance.now();
+  if(res.cleared.length){
+    res.cleared.forEach(({x,y,c})=>anims.push({x,y,c,t0:now+((x+y)%8)*18}));
+    const n=res.rows.length+res.cols.length;
+    const cx=L.bx+(gx+sd.w/2)*L.cell,cy=L.by+(gy+sd.h/2)*L.cell;
+    pops.push({x:cx,y:cy,txt:'+'+res.lineScore,sub:res.streak>1?'Sequência ×'+Math.min(res.streak,L_.MAX_STREAK):(n>1?n+' linhas':''),t0:now});
+    tone(523+n*80,.12,'sine');setTimeout(()=>tone(659+n*80,.14,'sine'),70);
+    if(res.boardCleared)pops.push({x:L.bx+L.bs/2,y:L.by+L.bs/2,txt:'Painel limpo! +'+L_.BOARD_CLEAR_BONUS,sub:'',t0:now+200});
+  }else tone(330,.06,'square',.03);
+  if(st.score>best){best=st.score;try{localStorage.setItem('azulejo-best',best)}catch(e){}}
+  updateHud();
+  if(res.over)showOver();
+}
+function updateHud(){$score.textContent=st.score;$best.textContent=best}
+
+// ---------- audio ----------
+function tone(f,d,type='sine',vol=.06){
+  if(!soundOn)return;
+  try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();
+    const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=f;
+    g.gain.setValueAtTime(vol,audio.currentTime);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+d);
+    o.connect(g).connect(audio.destination);o.start();o.stop(audio.currentTime+d);}catch(e){}
+}
+
+// ---------- layout ----------
+function layout(){
+  const r=stage.getBoundingClientRect();
+  const W=Math.min(r.width,460);
+  let H=r.height;
+  // board square + tray (~0.42 of width)
+  let bs=Math.min(W,(H)/1.42);
+  const tray=bs*0.42;
+  const dpr=window.devicePixelRatio||1;
+  cv.style.width=bs+'px';cv.style.height=(bs+tray)+'px';
+  cv.width=Math.round(bs*dpr);cv.height=Math.round((bs+tray)*dpr);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const pad=bs*0.035;
+  L={W:bs,H:bs+tray,frame:pad,bx:pad,by:pad,bs:bs-2*pad,cell:(bs-2*pad)/N,trayY:bs,trayH:tray};
+  L.slots=[0,1,2].map(i=>({x:bs*(i*2+1)/6,y:bs+tray*0.5,w:bs/3}));
+  L.mini=Math.min(L.cell*0.52,tray/5.6);
+}
+
+// ---------- drawing ----------
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function tile(x,y,s,ci,alpha=1){
+  const C=COLORS[ci];ctx.save();ctx.globalAlpha=alpha;
+  const g=s*0.05;x+=g;y+=g;s-=2*g;const r=s*0.16;
+  rr(x,y+s*0.06,s,s*0.94,r);ctx.fillStyle=C.dark;ctx.fill();
+  rr(x,y,s,s*0.92,r);ctx.fillStyle=C.base;ctx.fill();
+  // glaze sheen
+  ctx.save();rr(x,y,s,s*0.92,r);ctx.clip();
+  const gr=ctx.createLinearGradient(x,y,x+s,y+s);gr.addColorStop(0,'rgba(255,255,255,.28)');gr.addColorStop(.5,'rgba(255,255,255,0)');ctx.fillStyle=gr;ctx.fillRect(x,y,s,s);
+  ctx.restore();
+  // azulejo motif: quatrefoil + inner frame
+  const cx=x+s/2,cy=y+s*0.46,m=s*0.17;
+  ctx.strokeStyle='rgba(255,250,241,.55)';ctx.lineWidth=Math.max(1,s*0.045);
+  rr(x+s*0.14,y+s*0.12,s*0.72,s*0.68,r*0.6);ctx.stroke();
+  ctx.fillStyle='rgba(255,250,241,.85)';
+  for(const[dx,dy]of[[0,-1],[1,0],[0,1],[-1,0]]){ctx.beginPath();ctx.arc(cx+dx*m*0.75,cy+dy*m*0.75,m*0.55,0,Math.PI*2);ctx.fill()}
+  ctx.fillStyle=C.light;ctx.beginPath();ctx.arc(cx,cy,m*0.42,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+function drawPiece(p,cx,cy,s,alpha=1){
+  const sd=SHAPE_DATA[p.s];const ox=cx-sd.w*s/2,oy=cy-sd.h*s/2;
+  for(const[r,c]of sd.cells)tile(ox+c*s,oy+r*s,s,p.c,alpha);
+}
+function snapFor(){
+  if(!drag)return null;
+  const sd=SHAPE_DATA[st.tray[drag.idx].s];
+  const pcx=drag.x,pcy=drag.y-drag.lift;
+  const gx=Math.round((pcx-L.bx)/L.cell-sd.w/2),gy=Math.round((pcy-L.by)/L.cell-sd.h/2);
+  return canPlace(st.grid,sd,gx,gy)?{gx,gy,sd}:null;
+}
+function draw(now){
+  ctx.clearRect(0,0,L.W,L.H);
+  // frame
+  rr(0,0,L.W,L.W,L.W*0.05);ctx.fillStyle='#c9b392';ctx.fill();
+  rr(L.frame*0.5,L.frame*0.5,L.W-L.frame,L.W-L.frame,L.W*0.04);ctx.fillStyle='#d8c6a8';ctx.fill();
+  const snap=snapFor();
+  let ghost=null,willClear=new Set();
+  if(snap){
+    const g=st.grid.map(r=>r.slice());const ci=st.tray[drag.idx].c;
+    for(const[r,c]of snap.sd.cells)g[snap.gy+r][snap.gx+c]=ci;
+    const{rows,cols}=linesFor(g);
+    rows.forEach(y=>{for(let x=0;x<N;x++)willClear.add(y*N+x)});
+    cols.forEach(x=>{for(let y=0;y<N;y++)willClear.add(y*N+x)});
+    ghost={g,ci};
+  }
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const px=L.bx+x*L.cell,py=L.by+y*L.cell;
+    rr(px+L.cell*0.05,py+L.cell*0.05,L.cell*0.9,L.cell*0.9,L.cell*0.14);ctx.fillStyle='#e8dbc5';ctx.fill();
+    const v=st.grid[y][x];
+    if(v>=0){
+      tile(px,py,L.cell,willClear.has(y*N+x)&&ghost?ghost.ci:v);
+      if(willClear.has(y*N+x)){ctx.save();ctx.globalAlpha=.25+.15*Math.sin(now/90);rr(px+L.cell*.05,py+L.cell*.05,L.cell*.9,L.cell*.9,L.cell*.14);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}
+    }else if(ghost&&ghost.g[y][x]>=0){tile(px,py,L.cell,ghost.ci,willClear.has(y*N+x)?.85:.38)}
+  }
+  // clear animations
+  anims=anims.filter(a=>{const t=(now-a.t0)/320;if(t<0){tile(L.bx+a.x*L.cell,L.by+a.y*L.cell,L.cell,a.c);return true}if(t>=1)return false;
+    const s=L.cell*(1-t*0.6),off=(L.cell-s)/2;ctx.save();ctx.translate(L.bx+a.x*L.cell+L.cell/2,L.by+a.y*L.cell+L.cell/2);ctx.rotate(t*0.6);
+    tile(-s/2,-s/2-t*L.cell*0.4,s,a.c,1-t);ctx.restore();return true});
+  // tray
+  st.tray.forEach((p,i)=>{if(!p||(drag&&drag.idx===i))return;const sl=L.slots[i];
+    const fits=fitsAnywhere(st.grid,SHAPE_DATA[p.s]);drawPiece(p,sl.x,sl.y,L.mini,fits?1:.32)});
+  // dragged
+  if(drag){const p=st.tray[drag.idx];drawPiece(p,drag.x,drag.y-drag.lift,L.cell*0.96,snap?1:.9)}
+  // score pops
+  pops=pops.filter(p=>{const t=(now-p.t0)/900;if(t<0)return true;if(t>=1)return false;
+    ctx.save();ctx.globalAlpha=1-t*t;ctx.textAlign='center';ctx.fillStyle='#fffaf1';ctx.strokeStyle='#1f4fa3';ctx.lineWidth=5;ctx.lineJoin='round';
+    ctx.font=`${Math.round(L.cell*0.62)}px "Bagel Fat One", system-ui`;const y=p.y-t*L.cell*1.2;
+    ctx.strokeText(p.txt,p.x,y);ctx.fillText(p.txt,p.x,y);
+    if(p.sub){ctx.font=`800 ${Math.round(L.cell*0.3)}px Figtree, system-ui`;ctx.lineWidth=4;ctx.strokeStyle='#a7741a';ctx.strokeText(p.sub,p.x,y+L.cell*0.45);ctx.fillText(p.sub,p.x,y+L.cell*0.45)}
+    ctx.restore();return true});
+  requestAnimationFrame(draw);
+}
+
+// ---------- input ----------
+function pt(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+cv.addEventListener('pointerdown',e=>{
+  if(st.over)return;const p=pt(e);if(p.y<L.trayY-L.cell*0.3)return;
+  let idx=-1,bd=1e9;L.slots.forEach((s,i)=>{const d=Math.abs(p.x-s.x);if(st.tray[i]&&d<s.w/2&&d<bd){bd=d;idx=i}});
+  if(idx<0)return;
+  const sd=SHAPE_DATA[st.tray[idx].s];
+  drag={idx,x:p.x,y:p.y,lift:e.pointerType==='mouse'?0:L.cell*(sd.h/2+1.1)};
+  cv.setPointerCapture(e.pointerId);tone(440,.04,'sine',.03);
+});
+cv.addEventListener('pointermove',e=>{if(!drag)return;const p=pt(e);drag.x=p.x;drag.y=p.y});
+function endDrag(){if(!drag)return;const s=snapFor();const idx=drag.idx;drag=null;if(s)place(idx,s.gx,s.gy)}
+cv.addEventListener('pointerup',endDrag);
+cv.addEventListener('pointercancel',()=>{drag=null});
+
+function restart(){st=newState();deal();anims=[];pops=[];$over.hidden=true;updateHud()}
+document.getElementById('restart').onclick=restart;
+document.getElementById('again').onclick=restart;
+const $snd=document.getElementById('sound');
+$snd.onclick=()=>{soundOn=!soundOn;$snd.style.background=soundOn?'var(--cobalt)':'';$snd.style.color=soundOn?'var(--glaze)':'';$snd.setAttribute('aria-label',soundOn?'Desligar som':'Ligar som');tone(660,.08)};
+
+function start(data){
+  if(data&&data.st)st=data.st;else{
+    st=newState();
+    // sample opening: a few glazed tiles already on the board
+    [[7,0,0],[7,1,0],[7,2,1],[7,3,1],[7,5,2],[7,6,2],[7,7,3],[6,0,4],[6,7,3],[5,7,5]].forEach(([y,x,c])=>st.grid[y][x]=c);
+    deal();
+  }
+  layout();updateHud();requestAnimationFrame(draw);
+  if(st.over)showOver();
+}
+window.addEventListener('resize',layout);
+start({});
+window.__azulejo={get state(){return st},get layout(){return L}};
+})();
+</script>
+</body>
+</html>

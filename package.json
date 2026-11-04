@@ -1,0 +1,15 @@
+{
+  "name": "azulejo",
+  "version": "1.0.0",
+  "description": "Jogo de quebra-cabeça com azulejos: encaixe peças no painel 8×8 e limpe linhas e colunas.",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/logic.test.js",
+    "test:e2e": "node --test test/e2e.test.js",
+    "test:all": "node --test test/logic.test.js test/e2e.test.js",
+    "start": "npx --yes serve@14.2.4 ."
+  },
+  "devDependencies": {
+    "playwright": "1.48.2"
+  }
+}
