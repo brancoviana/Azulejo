@@ -4,6 +4,10 @@ Jogo de quebra-cabeça com azulejos de cerâmica. Arraste as peças para o paine
 
 **Jogar:** https://brancoviana.github.io/Azulejo/
 
+**Android (APK de teste):** https://github.com/brancoviana/Azulejo/releases/latest/download/azulejo.apk
+
+Abra o link no celular, baixe o arquivo e toque nele para instalar. Na primeira vez, o Android pede para permitir "instalar apps desconhecidos" para o navegador. Cada versão nova instala por cima da anterior e mantém a partida salva.
+
 ## Regras
 
 - A cada rodada chegam 3 peças. Novas peças só chegam depois que as três forem usadas.
@@ -28,6 +32,7 @@ Jogo de quebra-cabeça com azulejos de cerâmica. Arraste as peças para o paine
 | `logic.js` | Regras do jogo, sem DOM: peças, pontos, dificuldade, salvar e restaurar |
 | `sw.js` | Service worker: guarda os arquivos para jogar offline |
 | `manifest.webmanifest`, `icons/` | Dados e ícones do app instalável |
+| `android/` | App Android: abre o jogo numa WebView, com os arquivos dentro do APK |
 | `fonts/` | Fontes locais (SIL Open Font License, em `fonts/OFL.txt`) |
 | `test/logic.test.js` | Testes das regras (Node, sem dependências) |
 | `test/site.test.js` | Confere os arquivos do app, o cache offline e o workflow |
@@ -59,4 +64,6 @@ Ao adicionar ou remover arquivos do site, atualize a lista `FILES` em `sw.js`. O
 
 ## Publicação
 
-Cada push na `main` roda os testes no GitHub Actions. Se passarem, o jogo é publicado no GitHub Pages.
+Cada push na `main` roda os testes no GitHub Actions. Se passarem, o jogo é publicado no GitHub Pages e um APK novo sai em [Releases](https://github.com/brancoviana/Azulejo/releases).
+
+O APK é assinado com `android/app/teste.keystore`, uma chave **só para testes** que fica no repositório. Para publicar na Play Store, crie uma chave própria e guarde-a como segredo do GitHub, fora do repositório.
