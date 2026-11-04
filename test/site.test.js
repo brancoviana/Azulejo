@@ -49,3 +49,22 @@ test('workflow publica todos os arquivos do app', () => {
   for (const f of ['index.html', 'logic.js', 'sw.js', 'manifest.webmanifest', 'icons', 'fonts'])
     assert.match(wf, new RegExp(`cp[^\\n]*\\b${f.replace('.', '\\.')}\\b`), `workflow não copia ${f}`);
 });
+
+test('APK Android leva os mesmos arquivos que o jogo usa offline', () => {
+  const gradle = read('android/app/build.gradle.kts');
+  const include = gradle.match(/include\(([^)]*)\)/)[1];
+  const patterns = [...include.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+  const covered = f => patterns.some(p => p === f || (p.endsWith('/**') && f.startsWith(p.slice(0, -2))));
+  for (const f of swFiles()) {
+    if (f === './' || f === 'sw.js') continue;
+    assert.ok(covered(f), `${f} não vai para dentro do APK (android/app/build.gradle.kts)`);
+  }
+});
+
+test('APK Android: ícones em todas as densidades e chave de teste presentes', () => {
+  for (const d of ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi'])
+    assert.ok(exists(`android/app/src/main/res/mipmap-${d}/ic_launcher.png`), d);
+  assert.ok(exists('android/app/teste.keystore'));
+  assert.ok(exists('android/gradlew') && exists('android/gradle/wrapper/gradle-wrapper.jar'));
+  assert.ok(fs.statSync(path.join(ROOT, 'android/gradlew')).mode & 0o111, 'gradlew precisa ser executável');
+});
