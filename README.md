@@ -12,19 +12,28 @@ Jogo de quebra-cabeça com azulejos de cerâmica. Arraste as peças para o paine
 - Limpar em jogadas seguidas aumenta o multiplicador (até 8×). Uma jogada sem limpar zera a sequência.
 - Esvaziar o painel inteiro dá +300 pontos.
 - O jogo acaba quando nenhuma das peças restantes cabe no painel.
+- A dificuldade sobe com a pontuação. No começo vêm mais peças pequenas; até 4000 pontos, as peças grandes (5 ou mais azulejos) passam de cerca de 5% para 35% das peças.
+
+## Recursos
+
+- **A partida fica salva.** Fechar ou recarregar a página não perde o jogo.
+- **Recomeçar pede confirmação.** No meio de uma partida, o botão ↻ precisa de dois toques.
+- **App instalável.** No celular, toque em "Instalar" (ou "Adicionar à tela inicial") para ter o Azulejo como app, em tela cheia e funcionando offline.
 
 ## Estrutura
 
 | Arquivo | O que é |
 | --- | --- |
 | `index.html` | Interface: desenho em canvas, arrastar e soltar, sons, placar |
-| `logic.js` | Regras do jogo, sem DOM (usado pelo navegador e pelos testes) |
+| `logic.js` | Regras do jogo, sem DOM: peças, pontos, dificuldade, salvar e restaurar |
+| `sw.js` | Service worker: guarda os arquivos para jogar offline |
+| `manifest.webmanifest`, `icons/` | Dados e ícones do app instalável |
+| `fonts/` | Fontes locais (SIL Open Font License, em `fonts/OFL.txt`) |
 | `test/logic.test.js` | Testes das regras (Node, sem dependências) |
+| `test/site.test.js` | Confere os arquivos do app, o cache offline e o workflow |
 | `test/e2e.test.js` | Testes no navegador com Playwright |
 
 ## Rodar localmente
-
-Abra `index.html` no navegador, ou:
 
 ```bash
 npm start
@@ -44,7 +53,9 @@ npx playwright install chromium
 npm run test:all
 ```
 
-`npm test` roda só os testes de regras e não precisa instalar nada.
+`npm test` roda os testes de regras e de arquivos e não precisa instalar nada.
+
+Ao adicionar ou remover arquivos do site, atualize a lista `FILES` em `sw.js`. O teste `site.test.js` avisa se você esquecer.
 
 ## Publicação
 

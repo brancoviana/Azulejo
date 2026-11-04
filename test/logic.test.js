@@ -216,3 +216,101 @@ test('partida simulada: pontuação só sobe e o painel fica consistente', () =>
     assert.ok(moves > 3);
   }
 });
+
+// ---------- dificuldade ----------
+
+test('dificuldade vai de 0 a 1 conforme a pontuação', () => {
+  assert.equal(A.difficulty(0), 0);
+  assert.equal(A.difficulty(A.DIFFICULTY_MAX_SCORE / 2), 0.5);
+  assert.equal(A.difficulty(A.DIFFICULTY_MAX_SCORE * 10), 1);
+  assert.equal(A.difficulty(-5), 0);
+});
+
+test('pesos: todos positivos; peças pequenas perdem peso e grandes ganham', () => {
+  const small = A.SHAPE_DATA[ONE], big = A.SHAPE_DATA[SQ3], line5 = A.SHAPE_DATA[H5];
+  for (const score of [0, 1000, 4000, 99999])
+    for (const sd of A.SHAPE_DATA) assert.ok(A.pieceWeight(sd, score) > 0);
+  assert.ok(A.pieceWeight(small, 0) > A.pieceWeight(small, 4000));
+  assert.ok(A.pieceWeight(big, 0) < A.pieceWeight(big, 4000));
+  assert.ok(A.pieceWeight(line5, 0) < A.pieceWeight(line5, 4000));
+});
+
+test('randPiece: peças grandes ficam bem mais comuns com a pontuação', () => {
+  const stats = score => {
+    const rng = A.seededRng(7);
+    let sum = 0, big = 0, small = 0;
+    for (let i = 0; i < 4000; i++) {
+      const n = A.SHAPE_DATA[A.randPiece(rng, score).s].cells.length;
+      sum += n; if (n >= 5) big++; if (n <= 2) small++;
+    }
+    return { avg: sum / 4000, big: big / 4000, small: small / 4000 };
+  };
+  const early = stats(0), late = stats(A.DIFFICULTY_MAX_SCORE);
+  assert.ok(late.avg - early.avg > 0.5, `tamanho médio: início ${early.avg.toFixed(2)}, fim ${late.avg.toFixed(2)}`);
+  assert.ok(late.big > early.big * 2.5, `grandes: início ${early.big}, fim ${late.big}`);
+  assert.ok(late.small < early.small / 2, `pequenas: início ${early.small}, fim ${late.small}`);
+});
+
+test('randPiece: todas as formas podem aparecer, mesmo no início', () => {
+  const rng = A.seededRng(3), seen = new Set();
+  for (let i = 0; i < 20000; i++) seen.add(A.randPiece(rng, 0).s);
+  assert.equal(seen.size, A.SHAPE_DATA.length);
+});
+
+test('deal usa a pontuação atual para escolher as peças', () => {
+  const sizes = score => {
+    let sum = 0;
+    for (let seed = 1; seed <= 300; seed++) {
+      const st = A.newState(); st.score = score;
+      A.deal(st, A.seededRng(seed));
+      sum += st.tray.reduce((a, p) => a + A.SHAPE_DATA[p.s].cells.length, 0);
+    }
+    return sum;
+  };
+  assert.ok(sizes(A.DIFFICULTY_MAX_SCORE) > sizes(0));
+});
+
+// ---------- salvar e restaurar ----------
+
+test('serialize + restore devolvem a mesma partida', () => {
+  const rng = A.seededRng(11);
+  const st = A.newState(); A.deal(st, rng);
+  A.place(st, 0, 0, 0, rng);
+  st.streak = 2;
+  const back = A.restore(A.serialize(st));
+  assert.deepEqual(back.grid, st.grid);
+  assert.deepEqual(back.tray, st.tray);
+  assert.equal(back.score, st.score);
+  assert.equal(back.streak, 2);
+  assert.equal(back.over, false);
+});
+
+test('restore marca fim de jogo se a partida salva já não tem jogada', () => {
+  const fill = [];
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if ((x + y) % 2 === 0) fill.push([x, y]);
+  const st = stateWith([H2, H5, SQ3], fill);
+  assert.equal(A.restore(A.serialize(st)).over, true);
+});
+
+test('restore recusa dados corrompidos ou de outra versão', () => {
+  const good = JSON.parse(A.serialize(stateWith([ONE, H2, H5])));
+  const bad = [
+    'não é json', 'null', '[]', '{}',
+    { ...good, v: 999 },
+    { ...good, grid: good.grid.slice(1) },
+    { ...good, grid: good.grid.map((r, i) => i === 0 ? r.slice(1) : r) },
+    { ...good, grid: good.grid.map((r, i) => i === 0 ? [99, ...r.slice(1)] : r) },
+    { ...good, tray: [null, null, null] },
+    { ...good, tray: [{ s: 9999, c: 0 }, null, null] },
+    { ...good, tray: [{ s: 0, c: -1 }, null, null] },
+    { ...good, tray: [{ s: 0, c: 0 }] },
+    { ...good, score: -1 },
+    { ...good, score: 1.5 },
+    { ...good, streak: 'x' },
+    { ...good, grid: good.grid.map((r, i) => i === 0 ? r.map(() => 0) : r) }, // linha completa não limpa
+  ];
+  for (const b of bad) {
+    const txt = typeof b === 'string' ? b : JSON.stringify(b);
+    assert.equal(A.restore(txt), null, txt.slice(0, 80));
+  }
+});

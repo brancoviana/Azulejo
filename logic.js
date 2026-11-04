@@ -70,18 +70,40 @@
     return 10 * lines * (lines + 1) / 2 * Math.min(Math.max(streak, 1), MAX_STREAK);
   }
 
-  function randPiece(rng) {
-    return {
-      s: Math.floor(rng() * SHAPE_DATA.length),
-      c: Math.floor(rng() * COLOR_COUNT),
-    };
+  /** Pontuação em que a dificuldade chega ao máximo. */
+  const DIFFICULTY_MAX_SCORE = 4000;
+
+  /** 0 no início da partida, 1 a partir de DIFFICULTY_MAX_SCORE pontos. */
+  function difficulty(score) {
+    return Math.min(Math.max(score, 0) / DIFFICULTY_MAX_SCORE, 1);
+  }
+
+  /**
+   * Peso de sorteio de uma forma. No começo vêm mais peças pequenas;
+   * com a pontuação subindo, as peças grandes ficam mais comuns.
+   */
+  function pieceWeight(sd, score) {
+    const d = difficulty(score);
+    const n = sd.cells.length;
+    if (n <= 2) return 4 - 3.2 * d;        // 1–2 azulejos
+    if (n <= 4) return 2.5 - 0.7 * d;      // 3–4 azulejos
+    if (n <= 6) return 0.5 + 2.5 * d;      // 5–6 azulejos
+    return 0.1 + 1.6 * d;                  // quadrado 3x3
+  }
+
+  function randPiece(rng, score = 0) {
+    const weights = SHAPE_DATA.map(sd => pieceWeight(sd, score));
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = rng() * total, s = 0;
+    while (s < weights.length - 1 && r >= weights[s]) { r -= weights[s]; s++; }
+    return { s, c: Math.floor(rng() * COLOR_COUNT) };
   }
 
   /** Dá 3 peças novas; tenta garantir que pelo menos uma caiba no painel. */
   function deal(state, rng = Math.random) {
     let set;
     for (let t = 0; t < 30; t++) {
-      set = [randPiece(rng), randPiece(rng), randPiece(rng)];
+      set = [randPiece(rng, state.score), randPiece(rng, state.score), randPiece(rng, state.score)];
       if (set.some(p => fitsAnywhere(state.grid, SHAPE_DATA[p.s]))) break;
     }
     state.tray = set;
@@ -140,6 +162,36 @@
     return { gained, lineScore: lines_, rows, cols, cleared, boardCleared, dealt, streak: state.streak, over: state.over };
   }
 
+  /** Versão do formato salvo. Mude ao alterar a estrutura do estado. */
+  const SAVE_VERSION = 1;
+
+  function serialize(state) {
+    return JSON.stringify({ v: SAVE_VERSION, grid: state.grid, tray: state.tray, score: state.score, streak: state.streak });
+  }
+
+  /** Lê uma partida salva. Devolve null se o texto estiver corrompido ou for de outra versão. */
+  function restore(text) {
+    let d;
+    try { d = JSON.parse(text); } catch (e) { return null; }
+    const isInt = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+    if (!d || d.v !== SAVE_VERSION) return null;
+    if (!Array.isArray(d.grid) || d.grid.length !== N) return null;
+    for (const row of d.grid) {
+      if (!Array.isArray(row) || row.length !== N || !row.every(v => isInt(v, -1, COLOR_COUNT - 1))) return null;
+    }
+    if (!Array.isArray(d.tray) || d.tray.length !== 3) return null;
+    for (const p of d.tray) {
+      if (p === null) continue;
+      if (!p || !isInt(p.s, 0, SHAPE_DATA.length - 1) || !isInt(p.c, 0, COLOR_COUNT - 1)) return null;
+    }
+    if (d.tray.every(p => p === null)) return null;
+    if (!isInt(d.score, 0, Number.MAX_SAFE_INTEGER) || !isInt(d.streak, 0, Number.MAX_SAFE_INTEGER)) return null;
+    if (linesFor(d.grid).rows.length || linesFor(d.grid).cols.length) return null;
+    const state = { grid: d.grid, tray: d.tray, score: d.score, streak: d.streak, over: false };
+    state.over = isGameOver(state);
+    return state;
+  }
+
   /** Gerador pseudoaleatório determinístico (mulberry32), útil para testes e replays. */
   function seededRng(seed) {
     let a = seed >>> 0;
@@ -154,7 +206,8 @@
 
   return {
     N, COLOR_COUNT, MAX_STREAK, BOARD_CLEAR_BONUS, SHAPES, SHAPE_DATA,
+    DIFFICULTY_MAX_SCORE, SAVE_VERSION,
     shapeCells, emptyGrid, newState, canPlace, fitsAnywhere, linesFor, lineScore,
-    randPiece, deal, isGameOver, place, seededRng,
+    difficulty, pieceWeight, randPiece, deal, isGameOver, place, serialize, restore, seededRng,
   };
 });

@@ -6,9 +6,18 @@
 <meta name="description" content="Azulejo: jogo de quebra-cabeça com azulejos. Encaixe peças no painel 8×8 e limpe linhas e colunas.">
 <meta name="theme-color" content="#efe4d2">
 <title>Azulejo</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Figtree:wght@400;600;800&display=swap">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Azulejo">
+<link rel="preload" href="fonts/BagelFatOne-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+/* Fontes locais (SIL Open Font License, ver fonts/OFL.txt) para o jogo funcionar offline. */
+@font-face{font-family:'Bagel Fat One';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/BagelFatOne-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Bagel Fat One';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/BagelFatOne-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Figtree';font-style:normal;font-weight:400 800;font-display:swap;src:url(fonts/Figtree-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Figtree';font-style:normal;font-weight:400 800;font-display:swap;src:url(fonts/Figtree-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 /* Layout: one column, score strip on top, square glazed board, tray of three tiles below. Single deliberate look: sun-baked grout and glazed ceramic. */
 :root{
   --grout:#efe4d2;      /* page / argamassa */
@@ -32,19 +41,24 @@ h1{font-family:var(--font-display);font-weight:400;font-size:1.9rem;margin:0;col
 .stats{display:flex;gap:16px;align-items:flex-end}
 .stat{display:flex;flex-direction:column;align-items:flex-end}
 .stat span{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:600;opacity:.65}
-.stat b{font-family:var(--font-display);font-weight:400;font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.05}
+.stat b{font-family:var(--font-body);font-weight:800;font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.05}
 .stat.best b{color:var(--ochre)}
 button.icon{border:0;background:var(--grout-deep);color:var(--kiln);border-radius:10px;width:38px;height:38px;font:600 1rem var(--font-body);cursor:pointer}
 @media (max-width:400px){h1{font-size:1.45rem}.stats{gap:10px}.stat b{font-size:1.2rem}.stat span{font-size:.6rem;letter-spacing:.08em}button.icon{width:34px;height:34px}}
 button:focus-visible{outline:3px solid var(--cobalt);outline-offset:2px}
 .stage{flex:1;min-height:0;position:relative;display:flex;justify-content:center}
 canvas{touch-action:none;display:block;max-width:100%}
+.install{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--glaze);border:2px solid var(--cobalt);border-radius:12px;padding:8px 8px 8px 14px;font-size:.88rem;font-weight:600}
+.install .actions{display:flex;align-items:center;flex-shrink:0}
+.install button{border:0;background:var(--cobalt);color:var(--glaze);font:800 .88rem var(--font-body);padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
+.install .x{background:transparent;color:var(--kiln);padding:8px 10px}
+button.icon.armed{background:var(--ochre);color:var(--glaze)}
 .hint{text-align:center;font-size:.82rem;opacity:.6;margin:0}
 .over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,228,210,.82);backdrop-filter:blur(3px);border-radius:18px}
 .card{background:var(--glaze);border:3px solid var(--cobalt);border-radius:18px;padding:24px 28px;text-align:center;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 0 var(--cobalt)}
 .card h2{font-family:var(--font-display);font-weight:400;font-size:1.8rem;margin:0;color:var(--cobalt)}
 .card p{margin:0}
-.card .big{font-family:var(--font-display);font-size:2.6rem;font-variant-numeric:tabular-nums}
+.card .big{font-family:var(--font-body);font-weight:800;font-size:2.6rem;font-variant-numeric:tabular-nums}
 .play{margin-top:8px;border:0;background:var(--cobalt);color:var(--glaze);font:800 1rem var(--font-body);padding:12px 22px;border-radius:12px;cursor:pointer;box-shadow:0 4px 0 #12306a}
 .play:active{transform:translateY(2px);box-shadow:0 2px 0 #12306a}
 </style>
@@ -73,6 +87,10 @@ canvas{touch-action:none;display:block;max-width:100%}
       </div>
     </div>
   </div>
+  <div class="install" id="install" hidden>
+    <span>Instale o Azulejo e jogue offline.</span>
+    <span class="actions"><button id="installBtn">Instalar</button><button class="x" id="installClose" aria-label="Fechar aviso">✕</button></span>
+  </div>
   <p class="hint">Arraste os azulejos para o painel. Complete linhas ou colunas para limpar.</p>
 </div>
 
@@ -99,6 +117,9 @@ let best=0; try{best=+localStorage.getItem('azulejo-best')||0}catch(e){}
 let L={}; // layout
 let drag=null, anims=[], pops=[], soundOn=false, audio=null;
 
+const SAVE_KEY='azulejo-game';
+function save(){try{if(st.over)localStorage.removeItem(SAVE_KEY);else localStorage.setItem(SAVE_KEY,L_.serialize(st))}catch(e){}}
+function loadSaved(){try{const t=localStorage.getItem(SAVE_KEY);return t?L_.restore(t):null}catch(e){return null}}
 function newState(){return L_.newState()}
 function deal(){L_.deal(st)}
 function showOver(){
@@ -118,7 +139,7 @@ function place(idx,gx,gy){
     if(res.boardCleared)pops.push({x:L.bx+L.bs/2,y:L.by+L.bs/2,txt:'Painel limpo! +'+L_.BOARD_CLEAR_BONUS,sub:'',t0:now+200});
   }else tone(330,.06,'square',.03);
   if(st.score>best){best=st.score;try{localStorage.setItem('azulejo-best',best)}catch(e){}}
-  updateHud();
+  updateHud();save();
   if(res.over)showOver();
 }
 function updateHud(){$score.textContent=st.score;$best.textContent=best}
@@ -239,24 +260,38 @@ function endDrag(){if(!drag)return;const s=snapFor();const idx=drag.idx;drag=nul
 cv.addEventListener('pointerup',endDrag);
 cv.addEventListener('pointercancel',()=>{drag=null});
 
-function restart(){st=newState();deal();anims=[];pops=[];$over.hidden=true;updateHud()}
-document.getElementById('restart').onclick=restart;
+function restart(){st=newState();deal();anims=[];pops=[];drag=null;$over.hidden=true;updateHud();save()}
+// Recomeçar no meio da partida pede um segundo toque, para não perder o jogo salvo sem querer.
+const $restart=document.getElementById('restart');let armTimer=0;
+function disarm(){clearTimeout(armTimer);$restart.classList.remove('armed');$restart.setAttribute('aria-label','Recomeçar');$restart.title='Recomeçar'}
+$restart.onclick=()=>{
+  if(st.score===0||st.over||$restart.classList.contains('armed')){disarm();restart();return}
+  $restart.classList.add('armed');$restart.setAttribute('aria-label','Toque de novo para recomeçar');$restart.title='Toque de novo para recomeçar';
+  armTimer=setTimeout(disarm,2500);
+};
 document.getElementById('again').onclick=restart;
 const $snd=document.getElementById('sound');
 $snd.onclick=()=>{soundOn=!soundOn;$snd.style.background=soundOn?'var(--cobalt)':'';$snd.style.color=soundOn?'var(--glaze)':'';$snd.setAttribute('aria-label',soundOn?'Desligar som':'Ligar som');tone(660,.08)};
 
-function start(data){
-  if(data&&data.st)st=data.st;else{
-    st=newState();
-    // sample opening: a few glazed tiles already on the board
-    [[7,0,0],[7,1,0],[7,2,1],[7,3,1],[7,5,2],[7,6,2],[7,7,3],[6,0,4],[6,7,3],[5,7,5]].forEach(([y,x,c])=>st.grid[y][x]=c);
-    deal();
-  }
+function start(){
+  st=loadSaved();
+  if(!st){st=newState();deal();}
   layout();updateHud();requestAnimationFrame(draw);
   if(st.over)showOver();
 }
 window.addEventListener('resize',layout);
-start({});
+start();
+
+// ---------- app instalável ----------
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+const $install=document.getElementById('install');let installEvt=null;
+let installDismissed=false;try{installDismissed=localStorage.getItem('azulejo-install-dismissed')==='1'}catch(e){}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(!installDismissed){$install.hidden=false;layout()}});
+document.getElementById('installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$install.hidden=true;layout()};
+document.getElementById('installClose').onclick=()=>{$install.hidden=true;layout();try{localStorage.setItem('azulejo-install-dismissed','1')}catch(e){}};
+window.addEventListener('appinstalled',()=>{$install.hidden=true;layout()});
 window.__azulejo={get state(){return st},get layout(){return L}};
 })();
 </script>
