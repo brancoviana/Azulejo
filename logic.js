@@ -162,6 +162,29 @@
     return { gained, lineScore: lines_, rows, cols, cleared, boardCleared, dealt, streak: state.streak, over: state.over };
   }
 
+  /**
+   * Procura uma jogada possível para a dica. Prefere a que limpa mais linhas;
+   * no empate, a primeira encontrada. Devolve { idx, gx, gy, lines } ou null.
+   */
+  function findMove(state) {
+    let best = null;
+    state.tray.forEach((p, idx) => {
+      if (!p) return;
+      const sd = SHAPE_DATA[p.s];
+      for (let gy = 0; gy <= N - sd.h; gy++) {
+        for (let gx = 0; gx <= N - sd.w; gx++) {
+          if (!canPlace(state.grid, sd, gx, gy)) continue;
+          const g = state.grid.map(r => r.slice());
+          for (const [r, c] of sd.cells) g[gy + r][gx + c] = p.c;
+          const { rows, cols } = linesFor(g);
+          const lines = rows.length + cols.length;
+          if (!best || lines > best.lines) best = { idx, gx, gy, lines };
+        }
+      }
+    });
+    return best;
+  }
+
   /** Versão do formato salvo. Mude ao alterar a estrutura do estado. */
   const SAVE_VERSION = 1;
 
@@ -208,6 +231,6 @@
     N, COLOR_COUNT, MAX_STREAK, BOARD_CLEAR_BONUS, SHAPES, SHAPE_DATA,
     DIFFICULTY_MAX_SCORE, SAVE_VERSION,
     shapeCells, emptyGrid, newState, canPlace, fitsAnywhere, linesFor, lineScore,
-    difficulty, pieceWeight, randPiece, deal, isGameOver, place, serialize, restore, seededRng,
+    difficulty, pieceWeight, randPiece, deal, isGameOver, findMove, place, serialize, restore, seededRng,
   };
 });

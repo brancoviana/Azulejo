@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsets;
+import android.widget.FrameLayout;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -59,8 +60,14 @@ public class MainActivity extends Activity {
             }
         });
 
-        // Mantém o jogo fora da barra de status e da barra de navegação (Android 15+ desenha por baixo delas).
-        webView.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
+        // O jogo fica dentro de uma moldura com espaço para a barra de status e os botões
+        // do Android. (No Android 15+ o app desenha por baixo delas; padding na própria
+        // WebView não funciona, por isso a moldura.)
+        final FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.parseColor("#EFE4D2"));
+        root.addView(webView, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+        root.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {
             int top, bottom, left, right;
             if (android.os.Build.VERSION.SDK_INT >= 30) {
                 android.graphics.Insets bars = insets.getInsets(
@@ -74,7 +81,7 @@ public class MainActivity extends Activity {
             return insets;
         });
 
-        setContentView(webView);
+        setContentView(root);
         if (savedInstanceState != null) webView.restoreState(savedInstanceState);
         else webView.loadUrl(START_URL);
     }

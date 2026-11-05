@@ -52,7 +52,12 @@ canvas{touch-action:none;display:block;max-width:100%}
 .install .actions{display:flex;align-items:center;flex-shrink:0}
 .install button{border:0;background:var(--cobalt);color:var(--glaze);font:800 .88rem var(--font-body);padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .install .x{background:transparent;color:var(--kiln);padding:8px 10px}
-button.icon.armed{background:var(--ochre);color:var(--glaze)}
+.toolbar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.tool{border:2px solid var(--grout-deep);background:var(--glaze);color:var(--kiln);font:700 .95rem var(--font-body);padding:10px 18px;border-radius:12px;cursor:pointer;min-height:44px}
+.tool:active{transform:translateY(1px)}
+.tool.armed{background:var(--ochre);border-color:var(--ochre);color:var(--glaze)}
+.tool.on{border-color:var(--cobalt);color:var(--cobalt)}
+.hint.on{opacity:1;color:var(--cobalt);font-weight:700}
 .hint{text-align:center;font-size:.82rem;opacity:.6;margin:0}
 .over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,228,210,.82);backdrop-filter:blur(3px);border-radius:18px}
 .card{background:var(--glaze);border:3px solid var(--cobalt);border-radius:18px;padding:24px 28px;text-align:center;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 0 var(--cobalt)}
@@ -72,7 +77,6 @@ button.icon.armed{background:var(--ochre);color:var(--glaze)}
       <div class="stat"><span>Pontos</span><b id="score">0</b></div>
       <div class="stat best"><span>Recorde</span><b id="best">0</b></div>
       <button class="icon" id="sound" aria-label="Ligar som" title="Som">♪</button>
-      <button class="icon" id="restart" aria-label="Recomeçar" title="Recomeçar">↻</button>
     </div>
   </header>
   <div class="stage" id="stage">
@@ -87,11 +91,15 @@ button.icon.armed{background:var(--ochre);color:var(--glaze)}
       </div>
     </div>
   </div>
+  <div class="toolbar">
+    <button class="tool" id="hintBtn">Dica</button>
+    <button class="tool" id="restart">↻ Novo jogo</button>
+  </div>
   <div class="install" id="install" hidden>
     <span>Instale o Azulejo e jogue offline.</span>
     <span class="actions"><button id="installBtn">Instalar</button><button class="x" id="installClose" aria-label="Fechar aviso">✕</button></span>
   </div>
-  <p class="hint">Arraste os azulejos para o painel. Complete linhas ou colunas para limpar.</p>
+  <p class="hint" id="hintText" aria-live="polite">Arraste as peças para o painel e complete linhas ou colunas. Peças apagadas não cabem agora.</p>
 </div>
 
 <script src="logic.js"></script>
@@ -116,6 +124,12 @@ let st; // game state
 let best=0; try{best=+localStorage.getItem('azulejo-best')||0}catch(e){}
 let L={}; // layout
 let drag=null, anims=[], pops=[], soundOn=false, audio=null;
+// Dica: aparece sozinha depois de HINT_DELAY ms sem jogar, ou na hora pelo botão "Dica".
+const HINT_DELAY=8000;
+let lastAction=performance.now(), hintForced=false, hintCache=null, hintVer=-1, stateVer=0;
+function touched(){lastAction=performance.now();hintForced=false;stateVer++}
+function currentHint(){if(hintVer!==stateVer){hintCache=st.over?null:L_.findMove(st);hintVer=stateVer}return hintCache}
+function hintVisible(now){return !drag&&!st.over&&$over.hidden&&(hintForced||now-lastAction>HINT_DELAY)&&!!currentHint()}
 
 const SAVE_KEY='azulejo-game';
 function save(){try{if(st.over)localStorage.removeItem(SAVE_KEY);else localStorage.setItem(SAVE_KEY,L_.serialize(st))}catch(e){}}
@@ -129,6 +143,7 @@ function place(idx,gx,gy){
   const sd=SHAPE_DATA[st.tray[idx].s];
   const res=L_.place(st,idx,gx,gy);
   if(!res)return;
+  touched();
   const now=performance.now();
   if(res.cleared.length){
     res.cleared.forEach(({x,y,c})=>anims.push({x,y,c,t0:now+((x+y)%8)*18}));
@@ -226,6 +241,16 @@ function draw(now){
       if(willClear.has(y*N+x)){ctx.save();ctx.globalAlpha=.25+.15*Math.sin(now/90);rr(px+L.cell*.05,py+L.cell*.05,L.cell*.9,L.cell*.9,L.cell*.14);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}
     }else if(ghost&&ghost.g[y][x]>=0){tile(px,py,L.cell,ghost.ci,willClear.has(y*N+x)?.85:.38)}
   }
+  // dica
+  const showHint=hintVisible(now);
+  if(showHint){
+    const h=currentHint(),p=st.tray[h.idx],sd=SHAPE_DATA[p.s],a=.35+.25*Math.sin(now/260);
+    for(const[r,c]of sd.cells)tile(L.bx+(h.gx+c)*L.cell,L.by+(h.gy+r)*L.cell,L.cell,p.c,a);
+    const sl=L.slots[h.idx];
+    ctx.save();ctx.globalAlpha=.55+.35*Math.sin(now/260);ctx.strokeStyle='#1f4fa3';ctx.lineWidth=3;
+    rr(sl.x-sl.w/2+6,L.trayY+8,sl.w-12,L.trayH-16,14);ctx.stroke();ctx.restore();
+  }
+  setHintText(showHint);
   // clear animations
   anims=anims.filter(a=>{const t=(now-a.t0)/320;if(t<0){tile(L.bx+a.x*L.cell,L.by+a.y*L.cell,L.cell,a.c);return true}if(t>=1)return false;
     const s=L.cell*(1-t*0.6),off=(L.cell-s)/2;ctx.save();ctx.translate(L.bx+a.x*L.cell+L.cell/2,L.by+a.y*L.cell+L.cell/2);ctx.rotate(t*0.6);
@@ -245,10 +270,17 @@ function draw(now){
   requestAnimationFrame(draw);
 }
 
+const $hintText=document.getElementById('hintText');
+const HINT_DEFAULT=$hintText.textContent,HINT_ON='Dica: arraste a peça marcada para o lugar que está piscando no painel.';
+let hintShown=false;
+function setHintText(on){if(on!==hintShown){hintShown=on;$hintText.textContent=on?HINT_ON:HINT_DEFAULT;$hintText.classList.toggle('on',on)}}
+document.getElementById('hintBtn').onclick=()=>{if(st.over)return;lastAction=performance.now();hintForced=true};
+
 // ---------- input ----------
 function pt(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
 cv.addEventListener('pointerdown',e=>{
   if(st.over)return;const p=pt(e);if(p.y<L.trayY-L.cell*0.3)return;
+  lastAction=performance.now();hintForced=false;
   let idx=-1,bd=1e9;L.slots.forEach((s,i)=>{const d=Math.abs(p.x-s.x);if(st.tray[i]&&d<s.w/2&&d<bd){bd=d;idx=i}});
   if(idx<0)return;
   const sd=SHAPE_DATA[st.tray[idx].s];
@@ -260,14 +292,15 @@ function endDrag(){if(!drag)return;const s=snapFor();const idx=drag.idx;drag=nul
 cv.addEventListener('pointerup',endDrag);
 cv.addEventListener('pointercancel',()=>{drag=null});
 
-function restart(){st=newState();deal();anims=[];pops=[];drag=null;$over.hidden=true;updateHud();save()}
+function restart(){st=newState();deal();anims=[];pops=[];drag=null;$over.hidden=true;touched();updateHud();save()}
 // Recomeçar no meio da partida pede um segundo toque, para não perder o jogo salvo sem querer.
 const $restart=document.getElementById('restart');let armTimer=0;
-function disarm(){clearTimeout(armTimer);$restart.classList.remove('armed');$restart.setAttribute('aria-label','Recomeçar');$restart.title='Recomeçar'}
+const RESTART_LABEL=$restart.textContent;
+function disarm(){clearTimeout(armTimer);$restart.classList.remove('armed');$restart.textContent=RESTART_LABEL}
 $restart.onclick=()=>{
   if(st.score===0||st.over||$restart.classList.contains('armed')){disarm();restart();return}
-  $restart.classList.add('armed');$restart.setAttribute('aria-label','Toque de novo para recomeçar');$restart.title='Toque de novo para recomeçar';
-  armTimer=setTimeout(disarm,2500);
+  $restart.classList.add('armed');$restart.textContent='Toque de novo para apagar esta partida';
+  armTimer=setTimeout(disarm,3000);
 };
 document.getElementById('again').onclick=restart;
 const $snd=document.getElementById('sound');
@@ -276,7 +309,7 @@ $snd.onclick=()=>{soundOn=!soundOn;$snd.style.background=soundOn?'var(--cobalt)'
 function start(){
   st=loadSaved();
   if(!st){st=newState();deal();}
-  layout();updateHud();requestAnimationFrame(draw);
+  touched();layout();updateHud();requestAnimationFrame(draw);
   if(st.over)showOver();
 }
 window.addEventListener('resize',layout);
@@ -292,7 +325,7 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=
 document.getElementById('installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$install.hidden=true;layout()};
 document.getElementById('installClose').onclick=()=>{$install.hidden=true;layout();try{localStorage.setItem('azulejo-install-dismissed','1')}catch(e){}};
 window.addEventListener('appinstalled',()=>{$install.hidden=true;layout()});
-window.__azulejo={get state(){return st},get layout(){return L}};
+window.__azulejo={get state(){return st},get layout(){return L},get hint(){return hintVisible(performance.now())?currentHint():null},touched};
 })();
 </script>
 </body>

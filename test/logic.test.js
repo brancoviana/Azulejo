@@ -314,3 +314,53 @@ test('restore recusa dados corrompidos ou de outra versão', () => {
     assert.equal(A.restore(txt), null, txt.slice(0, 80));
   }
 });
+
+// ---------- dica ----------
+
+test('findMove devolve uma jogada válida quando existe', () => {
+  for (let seed = 1; seed <= 30; seed++) {
+    const rng = A.seededRng(seed);
+    const st = A.newState(); A.deal(st, rng);
+    for (let i = 0; i < 12 && !st.over; i++) {
+      const m = A.findMove(st);
+      assert.ok(m, 'jogo não acabou mas a dica não achou jogada');
+      assert.ok(A.canPlace(st.grid, A.SHAPE_DATA[st.tray[m.idx].s], m.gx, m.gy));
+      A.place(st, m.idx, m.gx, m.gy, rng);
+    }
+  }
+});
+
+test('findMove devolve null quando nenhuma peça cabe', () => {
+  const fill = [];
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) if ((x + y) % 2 === 0) fill.push([x, y]);
+  assert.equal(A.findMove(stateWith([H2, H5, SQ3], fill)), null);
+});
+
+test('findMove prefere a jogada que limpa linhas', () => {
+  const st = stateWith([SQ3, ONE, H2], fillRow(7, [6]));
+  const m = A.findMove(st);
+  assert.equal(m.lines, 1);
+  assert.equal(st.tray[m.idx].s === ONE ? `${m.gx},${m.gy}` : 'outra', '6,7');
+});
+
+test('findMove acha a jogada escondida das partidas reportadas (L amarelo no canto)', () => {
+  // Painel da partida com 208 pontos: só o L cabia, no canto de cima à esquerda.
+  const rows = [
+    '........',
+    '.#######',
+    '..###.##',
+    '#.######',
+    '.######.',
+    '#.###.#.',
+    '#######.',
+    '.#######',
+  ];
+  const st = A.newState();
+  rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '#') st.grid[y][x] = 1; }));
+  const L = shapeIndex(['#.', '#.', '##']);
+  const S = shapeIndex(['.#', '##', '#.']);
+  st.tray = [null, { s: L, c: 1 }, { s: S, c: 2 }];
+  assert.equal(A.isGameOver(st), false);
+  const m = A.findMove(st);
+  assert.deepEqual([m.idx, m.gx, m.gy], [1, 0, 0]);
+});

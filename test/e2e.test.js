@@ -202,10 +202,10 @@ test('jogo no navegador', { skip: !chromium && 'Playwright não instalado' }, as
     const score = await page.textContent('#score');
     await page.click('#restart');
     assert.equal(await page.textContent('#score'), score, 'um toque só não pode apagar a partida');
-    assert.equal(await page.getAttribute('#restart', 'aria-label'), 'Toque de novo para recomeçar');
+    assert.equal(await page.textContent('#restart'), 'Toque de novo para apagar esta partida');
     await page.click('#restart');
     assert.equal(await page.textContent('#score'), '0');
-    assert.equal(await page.getAttribute('#restart', 'aria-label'), 'Recomeçar');
+    assert.equal(await page.textContent('#restart'), '↻ Novo jogo');
     await page.close();
   });
 
@@ -292,6 +292,59 @@ test('jogo no navegador', { skip: !chromium && 'Playwright não instalado' }, as
     await page.reload(); await ready(page);
     await page.evaluate(() => { const e = new Event('beforeinstallprompt'); e.prompt = () => {}; window.dispatchEvent(e); });
     assert.equal(await page.isVisible('#install'), false, 'depois de fechado, o aviso não volta');
+    await page.close();
+  });
+
+  await t.test('botão "Novo jogo" está escrito por extenso', async () => {
+    const { page } = await open();
+    assert.equal(await page.textContent('#restart'), '↻ Novo jogo');
+    assert.equal(await page.isVisible('#restart'), true);
+    await page.close();
+  });
+
+  await t.test('botão "Dica" marca uma jogada válida e some ao jogar', async () => {
+    const { page } = await open();
+    assert.equal(await page.evaluate(() => window.__azulejo.hint), null, 'sem dica logo ao abrir');
+    await page.click('#hintBtn');
+    const h = await page.evaluate(() => window.__azulejo.hint);
+    assert.ok(h, 'dica não apareceu');
+    assert.ok(await page.evaluate(h => {
+      const { state } = window.__azulejo, A = window.AzulejoLogic;
+      return A.canPlace(state.grid, A.SHAPE_DATA[state.tray[h.idx].s], h.gx, h.gy);
+    }, h));
+    await page.waitForFunction(() => document.getElementById('hintText').textContent.startsWith('Dica:'));
+    await dragPiece(page, h.idx, h.gx, h.gy);
+    assert.equal(await page.evaluate(() => window.__azulejo.hint), null, 'dica continua depois de jogar');
+    await page.waitForFunction(() => !document.getElementById('hintText').textContent.startsWith('Dica:'));
+    await page.close();
+  });
+
+  await t.test('dica mostra a jogada escondida da partida reportada (L no canto)', async () => {
+    const { page } = await open();
+    await page.evaluate(() => {
+      const { state } = window.__azulejo, A = window.AzulejoLogic;
+      const rows = ['........', '.#######', '..###.##', '#.######', '.######.', '#.###.#.', '#######.', '.#######'];
+      rows.forEach((r, y) => [...r].forEach((ch, x) => { state.grid[y][x] = ch === '#' ? 1 : -1; }));
+      const idx = r => A.SHAPES.findIndex(s => s.join() === r);
+      state.tray = [null, { s: idx('#.,#.,##'), c: 1 }, { s: idx('.#,##,#.'), c: 2 }];
+      window.__azulejo.touched();
+    });
+    await page.click('#hintBtn');
+    const h = await page.evaluate(() => window.__azulejo.hint);
+    assert.deepEqual([h.idx, h.gx, h.gy], [1, 0, 0]);
+    await page.close();
+  });
+
+  await t.test('dica aparece sozinha depois de alguns segundos parado', async () => {
+    const page = await browser.newPage({ viewport: { width: 400, height: 780 } });
+    await page.clock.install();
+    await page.goto(url);
+    await page.clock.runFor(500);
+    await ready(page);
+    await page.clock.runFor(3000);
+    assert.equal(await page.evaluate(() => window.__azulejo.hint), null, 'dica cedo demais');
+    await page.clock.runFor(6000);
+    assert.ok(await page.evaluate(() => window.__azulejo.hint), 'dica não apareceu sozinha');
     await page.close();
   });
 

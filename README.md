@@ -21,7 +21,8 @@ Abra o link no celular, baixe o arquivo e toque nele para instalar. Na primeira 
 ## Recursos
 
 - **A partida fica salva.** Fechar ou recarregar a página não perde o jogo.
-- **Recomeçar pede confirmação.** No meio de uma partida, o botão ↻ precisa de dois toques.
+- **Dica.** O botão "Dica" mostra uma jogada possível. A dica também aparece sozinha depois de 8 segundos sem jogar.
+- **Novo jogo pede confirmação.** No meio de uma partida, o botão "Novo jogo" precisa de dois toques.
 - **App instalável.** No celular, toque em "Instalar" (ou "Adicionar à tela inicial") para ter o Azulejo como app, em tela cheia e funcionando offline.
 
 ## Estrutura
