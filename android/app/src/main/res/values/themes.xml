@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Azulejo" parent="@android:style/Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@color/argamassa</item>
-        <item name="android:statusBarColor">@color/argamassa</item>
-        <item name="android:navigationBarColor">@color/argamassa</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/noite</item>
+        <item name="android:statusBarColor">@color/noite</item>
+        <item name="android:navigationBarColor">@color/noite</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

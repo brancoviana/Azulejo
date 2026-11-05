@@ -2,7 +2,7 @@
 'use strict';
 
 // Mude a versão ao adicionar ou remover arquivos da lista.
-const CACHE = 'azulejo-v1';
+const CACHE = 'azulejo-v2';
 const FILES = [
   './',
   'index.html',

@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
                 .build();
 
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.parseColor("#EFE4D2"));
+        webView.setBackgroundColor(Color.parseColor("#0B1530"));
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -64,7 +64,7 @@ public class MainActivity extends Activity {
         // do Android. (No Android 15+ o app desenha por baixo delas; padding na própria
         // WebView não funciona, por isso a moldura.)
         final FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.parseColor("#EFE4D2"));
+        root.setBackgroundColor(Color.parseColor("#0B1530"));
         root.addView(webView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         root.setOnApplyWindowInsetsListener((View v, WindowInsets insets) -> {

@@ -35,6 +35,7 @@ Abra o link no celular, baixe o arquivo e toque nele para instalar. Na primeira 
 | `manifest.webmanifest`, `icons/` | Dados e ícones do app instalável |
 | `android/` | App Android: abre o jogo numa WebView, com os arquivos dentro do APK |
 | `fonts/` | Fontes locais (SIL Open Font License, em `fonts/OFL.txt`) |
+| `scripts/icons.js` | Gera os ícones do site e do app a partir do desenho dos azulejos (`node scripts/icons.js`) |
 | `test/logic.test.js` | Testes das regras (Node, sem dependências) |
 | `test/site.test.js` | Confere os arquivos do app, o cache offline e o workflow |
 | `test/e2e.test.js` | Testes no navegador com Playwright |

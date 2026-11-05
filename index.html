@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Azulejo: jogo de quebra-cabeça com azulejos. Encaixe peças no painel 8×8 e limpe linhas e colunas.">
-<meta name="theme-color" content="#efe4d2">
+<meta name="theme-color" content="#0b1530">
 <title>Azulejo</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -18,54 +18,60 @@
 @font-face{font-family:'Bagel Fat One';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/BagelFatOne-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 @font-face{font-family:'Figtree';font-style:normal;font-weight:400 800;font-display:swap;src:url(fonts/Figtree-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
 @font-face{font-family:'Figtree';font-style:normal;font-weight:400 800;font-display:swap;src:url(fonts/Figtree-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
-/* Layout: one column, score strip on top, square glazed board, tray of three tiles below. Single deliberate look: sun-baked grout and glazed ceramic. */
+/* Layout: uma coluna; placar no topo, painel de cerâmica em relevo, bandeja e botões embaixo.
+   Visual único e escuro de propósito: noite azul-cobalto, esmalte brilhante e moldura dourada. */
 :root{
-  --grout:#efe4d2;      /* page / argamassa */
-  --grout-deep:#ddcdb4; /* empty cells */
-  --kiln:#3b2a1e;       /* text */
-  --cobalt:#1f4fa3;     /* accent */
-  --ochre:#d39a2a;
-  --glaze:#fffaf1;
+  --night:#0b1530;      /* fundo */
+  --night-2:#16295a;    /* brilho do fundo */
+  --panel:rgba(255,255,255,.07);
+  --line:rgba(255,255,255,.14);
+  --ink:#f6eedf;        /* texto */
+  --ink-dim:rgba(246,238,223,.62);
+  --gold:#f1c15a;       /* destaque */
+  --gold-deep:#b9822a;
+  --cobalt:#4f86ff;
   --font-display:"Bagel Fat One","Arial Rounded MT Bold",system-ui,sans-serif;
   --font-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
-  color-scheme:light;
+  color-scheme:dark;
 }
 html,body{height:100%}
 [hidden]{display:none!important}
-body{background:var(--grout);color:var(--kiln);font-family:var(--font-body);
+html{background:var(--night)}
+body{margin:0;background:radial-gradient(120% 70% at 50% 0%,var(--night-2) 0%,var(--night) 62%) var(--night);color:var(--ink);font-family:var(--font-body);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
   padding-block:12px;box-sizing:border-box;overflow:hidden;user-select:none;-webkit-user-select:none}
 .wrap{max-width:460px;margin:0 auto;height:100%;display:flex;flex-direction:column;gap:10px}
 header{display:flex;min-width:0;align-items:center;justify-content:space-between;gap:12px}
-h1{font-family:var(--font-display);font-weight:400;font-size:1.9rem;margin:0;color:var(--cobalt);letter-spacing:.01em;line-height:1}
+h1{font-family:var(--font-display);font-weight:400;font-size:1.9rem;margin:0;line-height:1;letter-spacing:.01em;
+  background:linear-gradient(180deg,#fff3c9 0%,var(--gold) 45%,var(--gold-deep) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,.35)) drop-shadow(0 0 14px rgba(241,193,90,.25))}
 .stats{display:flex;gap:16px;align-items:flex-end}
 .stat{display:flex;flex-direction:column;align-items:flex-end}
-.stat span{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:600;opacity:.65}
+.stat span{font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;font-weight:600;color:var(--ink-dim)}
 .stat b{font-family:var(--font-body);font-weight:800;font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1.05}
-.stat.best b{color:var(--ochre)}
-button.icon{border:0;background:var(--grout-deep);color:var(--kiln);border-radius:10px;width:38px;height:38px;font:600 1rem var(--font-body);cursor:pointer}
-@media (max-width:400px){h1{font-size:1.45rem}.stats{gap:10px}.stat b{font-size:1.2rem}.stat span{font-size:.6rem;letter-spacing:.08em}button.icon{width:34px;height:34px}}
-button:focus-visible{outline:3px solid var(--cobalt);outline-offset:2px}
+.stat.best b{color:var(--gold)}
+button.icon{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px;width:40px;height:40px;font:600 1rem var(--font-body);cursor:pointer}
+@media (max-width:400px){h1{font-size:1.5rem}.stats{gap:10px}.stat b{font-size:1.25rem}.stat span{font-size:.6rem;letter-spacing:.08em}button.icon{width:36px;height:36px}}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .stage{flex:1;min-height:0;position:relative;display:flex;justify-content:center}
 canvas{touch-action:none;display:block;max-width:100%}
-.install{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--glaze);border:2px solid var(--cobalt);border-radius:12px;padding:8px 8px 8px 14px;font-size:.88rem;font-weight:600}
+.install{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px solid var(--gold-deep);border-radius:14px;padding:8px 8px 8px 14px;font-size:.88rem;font-weight:600}
 .install .actions{display:flex;align-items:center;flex-shrink:0}
-.install button{border:0;background:var(--cobalt);color:var(--glaze);font:800 .88rem var(--font-body);padding:8px 14px;border-radius:9px;cursor:pointer;white-space:nowrap}
-.install .x{background:transparent;color:var(--kiln);padding:8px 10px}
+.install button{border:0;background:linear-gradient(180deg,var(--gold),var(--gold-deep));color:#2a1a05;font:800 .88rem var(--font-body);padding:8px 14px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.install .x{background:transparent;color:var(--ink);padding:8px 10px}
 .toolbar{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
-.tool{border:2px solid var(--grout-deep);background:var(--glaze);color:var(--kiln);font:700 .95rem var(--font-body);padding:10px 18px;border-radius:12px;cursor:pointer;min-height:44px}
+.tool{border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));color:var(--ink);font:700 .95rem var(--font-body);padding:10px 20px;border-radius:14px;cursor:pointer;min-height:44px;box-shadow:0 6px 16px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.18)}
 .tool:active{transform:translateY(1px)}
-.tool.armed{background:var(--ochre);border-color:var(--ochre);color:var(--glaze)}
-.tool.on{border-color:var(--cobalt);color:var(--cobalt)}
-.hint.on{opacity:1;color:var(--cobalt);font-weight:700}
-.hint{text-align:center;font-size:.82rem;opacity:.6;margin:0}
-.over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,228,210,.82);backdrop-filter:blur(3px);border-radius:18px}
-.card{background:var(--glaze);border:3px solid var(--cobalt);border-radius:18px;padding:24px 28px;text-align:center;display:flex;flex-direction:column;gap:8px;box-shadow:0 10px 0 var(--cobalt)}
-.card h2{font-family:var(--font-display);font-weight:400;font-size:1.8rem;margin:0;color:var(--cobalt)}
-.card p{margin:0}
-.card .big{font-family:var(--font-body);font-weight:800;font-size:2.6rem;font-variant-numeric:tabular-nums}
-.play{margin-top:8px;border:0;background:var(--cobalt);color:var(--glaze);font:800 1rem var(--font-body);padding:12px 22px;border-radius:12px;cursor:pointer;box-shadow:0 4px 0 #12306a}
-.play:active{transform:translateY(2px);box-shadow:0 2px 0 #12306a}
+.tool.armed{background:linear-gradient(180deg,var(--gold),var(--gold-deep));border-color:var(--gold);color:#2a1a05}
+.hint.on{color:var(--gold);font-weight:700}
+.hint{text-align:center;font-size:.82rem;color:var(--ink-dim);margin:0}
+.over{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,14,32,.62);backdrop-filter:blur(4px);border-radius:18px}
+.card{background:linear-gradient(180deg,#1d3270,#111f47);border:2px solid var(--gold);border-radius:20px;padding:26px 30px;text-align:center;display:flex;flex-direction:column;gap:8px;box-shadow:0 20px 50px rgba(0,0,0,.55),0 0 40px rgba(241,193,90,.18),inset 0 1px 0 rgba(255,255,255,.2)}
+.card h2{font-family:var(--font-display);font-weight:400;font-size:1.9rem;margin:0;background:linear-gradient(180deg,#fff3c9,var(--gold) 50%,var(--gold-deep));-webkit-background-clip:text;background-clip:text;color:transparent}
+.card p{margin:0;color:var(--ink-dim)}
+.card .big{font-family:var(--font-body);font-weight:800;font-size:2.8rem;font-variant-numeric:tabular-nums;color:var(--ink);text-shadow:0 0 20px rgba(255,255,255,.25)}
+.play{margin-top:10px;border:0;background:linear-gradient(180deg,#ffe08a,var(--gold) 45%,var(--gold-deep));color:#2a1a05;font:800 1.05rem var(--font-body);padding:13px 26px;border-radius:14px;cursor:pointer;box-shadow:0 5px 0 #7a5418,0 10px 24px rgba(0,0,0,.4)}
+.play:active{transform:translateY(3px);box-shadow:0 2px 0 #7a5418}
 </style>
 
 </head>
@@ -107,13 +113,14 @@ canvas{touch-action:none;display:block;max-width:100%}
 (()=>{
 const L_=window.AzulejoLogic;
 const {N,SHAPE_DATA,canPlace,fitsAnywhere,linesFor}=L_;
+// Esmaltes: base, luz, sombra e lateral (deep) de cada cor.
 const COLORS=[
-  {base:'#1f4fa3',dark:'#143a7d',light:'#5b85d1'}, // cobalto
-  {base:'#d39a2a',dark:'#a7741a',light:'#f0c46a'}, // ocre
-  {base:'#5d8a3a',dark:'#436a28',light:'#93bd6c'}, // oliva
-  {base:'#9b2f45',dark:'#741f32',light:'#cf6a7e'}, // vinho
-  {base:'#2f8f8a',dark:'#1f6d69',light:'#6cc2bc'}, // turquesa
-  {base:'#6a4a9a',dark:'#4e3476',light:'#9c80c8'}, // ameixa
+  {base:'#2f6fe0',light:'#8fb6ff',dark:'#1a449a',deep:'#0f2a66'}, // cobalto
+  {base:'#f0a52a',light:'#ffd98a',dark:'#b8701a',deep:'#7a4710'}, // âmbar
+  {base:'#27b06a',light:'#86ecb0',dark:'#147a45',deep:'#0b4d2b'}, // esmeralda
+  {base:'#e2405e',light:'#ff9aac',dark:'#a82139',deep:'#6b1224'}, // rubi
+  {base:'#1fb9b2',light:'#8af0ea',dark:'#127f7a',deep:'#0a524f'}, // turquesa
+  {base:'#8b5cf0',light:'#c9b0ff',dark:'#5b34b0',deep:'#3a1f76'}, // violeta
 ];
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
 const stage=document.getElementById('stage');
@@ -140,13 +147,13 @@ function showOver(){
   setTimeout(()=>{$final.textContent=st.score;$finalBest.textContent=st.score>=best&&st.score>0?'Novo recorde!':'Recorde: '+best;$over.hidden=false;tone(196,.25,'triangle')},450);
 }
 function place(idx,gx,gy){
-  const sd=SHAPE_DATA[st.tray[idx].s];
+  const sd=SHAPE_DATA[st.tray[idx].s],pc=st.tray[idx].c;
   const res=L_.place(st,idx,gx,gy);
   if(!res)return;
-  touched();
+  touched();fxPlace(sd,gx,gy,pc,res);
   const now=performance.now();
   if(res.cleared.length){
-    res.cleared.forEach(({x,y,c})=>anims.push({x,y,c,t0:now+((x+y)%8)*18}));
+    res.cleared.forEach(({x,y,c})=>anims.push({x,y,c,t0:now+((x+y)%8)*22}));
     const n=res.rows.length+res.cols.length;
     const cx=L.bx+(gx+sd.w/2)*L.cell,cy=L.by+(gy+sd.h/2)*L.cell;
     pops.push({x:cx,y:cy,txt:'+'+res.lineScore,sub:res.streak>1?'Sequência ×'+Math.min(res.streak,L_.MAX_STREAK):(n>1?n+' linhas':''),t0:now});
@@ -175,7 +182,7 @@ function layout(){
   let H=r.height;
   // board square + tray (~0.42 of width)
   let bs=Math.min(W,(H)/1.42);
-  const tray=bs*0.42;
+  const tray=Math.max(bs*0.42,Math.min(bs*0.62,H-bs));
   const dpr=window.devicePixelRatio||1;
   cv.style.width=bs+'px';cv.style.height=(bs+tray)+'px';
   cv.width=Math.round(bs*dpr);cv.height=Math.round((bs+tray)*dpr);
@@ -183,33 +190,139 @@ function layout(){
   const pad=bs*0.035;
   L={W:bs,H:bs+tray,frame:pad,bx:pad,by:pad,bs:bs-2*pad,cell:(bs-2*pad)/N,trayY:bs,trayH:tray};
   L.slots=[0,1,2].map(i=>({x:bs*(i*2+1)/6,y:bs+tray*0.5,w:bs/3}));
-  L.mini=Math.min(L.cell*0.52,tray/5.6);
+  L.mini=Math.min(L.cell*0.64,tray/5.2);
+  boardLayer=null;sprites.clear();
 }
 
 // ---------- drawing ----------
-function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+// Cada azulejo é desenhado uma vez por cor e tamanho numa tela fora da página (sprite) com
+// lateral, sombra, bisel, esmalte e brilho; depois só é copiado. Assim o relevo fica rico e leve.
+const reduceMotion=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+const sprites=new Map();
+let boardLayer=null;
+function rrp(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function rr(x,y,w,h,r){rrp(ctx,x,y,w,h,r)}
+function makeCanvas(w,h){const c=document.createElement('canvas');c.width=Math.max(1,Math.ceil(w));c.height=Math.max(1,Math.ceil(h));return c}
+
+function tileSprite(ci,size){
+  const dpr=window.devicePixelRatio||1,key=ci+'|'+Math.round(size*dpr*4);
+  let sp=sprites.get(key);if(sp)return sp;
+  if(sprites.size>160)sprites.clear();
+  const C=COLORS[ci],S=size*dpr,pad=S*0.3,cv2=makeCanvas(S+2*pad,S+2*pad),c=cv2.getContext('2d');
+  const g=S*0.055,x=pad+g,y=pad+g,s=S-2*g,r=s*0.2,depth=s*0.11,top=s-depth;
+  // sombra no chão
+  c.save();c.shadowColor='rgba(0,0,0,.55)';c.shadowBlur=s*0.2;c.shadowOffsetY=s*0.12;
+  rrp(c,x+s*0.03,y+depth,s*0.94,s-depth,r);c.fillStyle=C.deep;c.fill();c.restore();
+  // lateral (espessura da cerâmica)
+  rrp(c,x,y,s,s,r);
+  let gr=c.createLinearGradient(0,y+top*0.5,0,y+s);gr.addColorStop(0,C.dark);gr.addColorStop(1,C.deep);c.fillStyle=gr;c.fill();
+  // face de cima
+  rrp(c,x,y,s,top,r);
+  gr=c.createLinearGradient(x,y,x+s*0.6,y+top);gr.addColorStop(0,C.light);gr.addColorStop(0.45,C.base);gr.addColorStop(1,C.dark);
+  c.fillStyle=gr;c.fill();
+  c.save();rrp(c,x,y,s,top,r);c.clip();
+  // luz difusa vinda de cima à esquerda
+  gr=c.createRadialGradient(x+s*0.28,y+top*0.2,0,x+s*0.28,y+top*0.2,s*0.85);
+  gr.addColorStop(0,'rgba(255,255,255,.38)');gr.addColorStop(0.5,'rgba(255,255,255,.06)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  c.fillStyle=gr;c.fillRect(x,y,s,top);
+  // esmalte brilhante: faixa curva na metade de cima
+  c.beginPath();c.moveTo(x,y);c.lineTo(x+s,y);c.lineTo(x+s,y+top*0.32);
+  c.quadraticCurveTo(x+s*0.5,y+top*0.52,x,y+top*0.4);c.closePath();
+  gr=c.createLinearGradient(0,y,0,y+top*0.5);gr.addColorStop(0,'rgba(255,255,255,.42)');gr.addColorStop(1,'rgba(255,255,255,.04)');
+  c.fillStyle=gr;c.fill();
+  c.restore();
+  // bisel: luz na borda de cima, sombra na de baixo
+  c.save();rrp(c,x+s*0.025,y+s*0.025,s-s*0.05,top-s*0.05,r*0.85);
+  gr=c.createLinearGradient(0,y,0,y+top);gr.addColorStop(0,'rgba(255,255,255,.75)');gr.addColorStop(0.35,'rgba(255,255,255,.12)');gr.addColorStop(1,'rgba(0,0,0,.28)');
+  c.strokeStyle=gr;c.lineWidth=Math.max(1,s*0.035);c.stroke();c.restore();
+  // desenho do azulejo, em baixo-relevo esmaltado
+  const cx=x+s/2,cy=y+top/2,m=s*0.15;
+  c.save();c.translate(0,s*0.012);c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=Math.max(1,s*0.03);
+  rrp(c,x+s*0.15,y+top*0.15,s*0.7,top*0.7,r*0.55);c.stroke();c.restore();
+  c.strokeStyle='rgba(255,255,255,.42)';c.lineWidth=Math.max(1,s*0.028);
+  rrp(c,x+s*0.15,y+top*0.15,s*0.7,top*0.7,r*0.55);c.stroke();
+  c.save();c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=s*0.035;c.shadowOffsetY=s*0.025;
+  for(const[dx,dy]of[[0,-1],[1,0],[0,1],[-1,0]]){
+    const px=cx+dx*m*0.78,py=cy+dy*m*0.78;
+    gr=c.createRadialGradient(px-m*0.2,py-m*0.25,0,px,py,m*0.62);
+    gr.addColorStop(0,'#ffffff');gr.addColorStop(0.7,'#f5ecdc');gr.addColorStop(1,'#d9cbb2');
+    c.fillStyle=gr;c.beginPath();c.arc(px,py,m*0.58,0,Math.PI*2);c.fill();
+  }
+  c.restore();
+  gr=c.createRadialGradient(cx-m*0.12,cy-m*0.15,0,cx,cy,m*0.45);gr.addColorStop(0,'#fff');gr.addColorStop(0.35,C.light);gr.addColorStop(1,C.dark);
+  c.fillStyle=gr;c.beginPath();c.arc(cx,cy,m*0.42,0,Math.PI*2);c.fill();
+  // reflexo pontual
+  c.save();c.globalAlpha=.85;gr=c.createRadialGradient(x+s*0.2,y+top*0.16,0,x+s*0.2,y+top*0.16,s*0.09);
+  gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=gr;
+  c.beginPath();c.ellipse(x+s*0.2,y+top*0.16,s*0.12,s*0.06,-0.5,0,Math.PI*2);c.fill();c.restore();
+  sp={cv:cv2,pad:pad/dpr,full:(S+2*pad)/dpr};sprites.set(key,sp);return sp;
+}
 function tile(x,y,s,ci,alpha=1){
-  const C=COLORS[ci];ctx.save();ctx.globalAlpha=alpha;
-  const g=s*0.05;x+=g;y+=g;s-=2*g;const r=s*0.16;
-  rr(x,y+s*0.06,s,s*0.94,r);ctx.fillStyle=C.dark;ctx.fill();
-  rr(x,y,s,s*0.92,r);ctx.fillStyle=C.base;ctx.fill();
-  // glaze sheen
-  ctx.save();rr(x,y,s,s*0.92,r);ctx.clip();
-  const gr=ctx.createLinearGradient(x,y,x+s,y+s);gr.addColorStop(0,'rgba(255,255,255,.28)');gr.addColorStop(.5,'rgba(255,255,255,0)');ctx.fillStyle=gr;ctx.fillRect(x,y,s,s);
-  ctx.restore();
-  // azulejo motif: quatrefoil + inner frame
-  const cx=x+s/2,cy=y+s*0.46,m=s*0.17;
-  ctx.strokeStyle='rgba(255,250,241,.55)';ctx.lineWidth=Math.max(1,s*0.045);
-  rr(x+s*0.14,y+s*0.12,s*0.72,s*0.68,r*0.6);ctx.stroke();
-  ctx.fillStyle='rgba(255,250,241,.85)';
-  for(const[dx,dy]of[[0,-1],[1,0],[0,1],[-1,0]]){ctx.beginPath();ctx.arc(cx+dx*m*0.75,cy+dy*m*0.75,m*0.55,0,Math.PI*2);ctx.fill()}
-  ctx.fillStyle=C.light;ctx.beginPath();ctx.arc(cx,cy,m*0.42,0,Math.PI*2);ctx.fill();
-  ctx.restore();
+  const sp=tileSprite(ci,s);
+  if(alpha!==1){ctx.save();ctx.globalAlpha*=alpha}
+  ctx.drawImage(sp.cv,x-sp.pad,y-sp.pad,sp.full,sp.full);
+  if(alpha!==1)ctx.restore();
 }
 function drawPiece(p,cx,cy,s,alpha=1){
   const sd=SHAPE_DATA[p.s];const ox=cx-sd.w*s/2,oy=cy-sd.h*s/2;
-  for(const[r,c]of sd.cells)tile(ox+c*s,oy+r*s,s,p.c,alpha);
+  // desenha de cima para baixo, para a lateral de um azulejo ficar por trás do de baixo
+  const cells=sd.cells.slice().sort((a,b)=>a[0]-b[0]);
+  for(const[r,c]of cells)tile(ox+c*s,oy+r*s,s,p.c,alpha);
 }
+
+// Painel: moldura dourada, fundo de cerâmica escura e casas rebaixadas. Redesenhado só ao mudar o tamanho.
+function buildBoardLayer(){
+  const dpr=window.devicePixelRatio||1,W=L.W;
+  const cv2=makeCanvas(W*dpr,W*dpr),c=cv2.getContext('2d');c.scale(dpr,dpr);
+  const R=W*0.055;
+  c.save();c.shadowColor='rgba(0,0,0,.55)';c.shadowBlur=W*0.05;c.shadowOffsetY=W*0.02;
+  rrp(c,W*0.01,W*0.01,W*0.98,W*0.97,R);c.fillStyle='#6e4b17';c.fill();c.restore();
+  let gr=c.createLinearGradient(0,0,W,W);
+  gr.addColorStop(0,'#ffe7a3');gr.addColorStop(0.25,'#e2a93f');gr.addColorStop(0.5,'#a8721f');gr.addColorStop(0.75,'#f0c463');gr.addColorStop(1,'#8a5b17');
+  rrp(c,W*0.01,W*0.005,W*0.98,W*0.975,R);c.fillStyle=gr;c.fill();
+  const inset=L.frame*0.55;
+  rrp(c,inset,inset,W-2*inset,W-2*inset,R*0.8);
+  gr=c.createLinearGradient(0,inset,0,W-inset);gr.addColorStop(0,'#0e1c42');gr.addColorStop(1,'#182d63');
+  c.fillStyle=gr;c.fill();
+  c.save();rrp(c,inset,inset,W-2*inset,W-2*inset,R*0.8);c.clip();
+  c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=W*0.03;c.shadowOffsetY=W*0.008;c.lineWidth=W*0.02;c.strokeStyle='rgba(0,0,0,.6)';
+  rrp(c,inset-W*0.01,inset-W*0.01,W-2*inset+W*0.02,W-2*inset+W*0.02,R*0.8);c.stroke();c.restore();
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const px=L.bx+x*L.cell+L.cell*0.07,py=L.by+y*L.cell+L.cell*0.07,s=L.cell*0.86,r=s*0.2;
+    rrp(c,px,py,s,s,r);
+    gr=c.createLinearGradient(0,py,0,py+s);gr.addColorStop(0,'#081330');gr.addColorStop(1,'#14275a');c.fillStyle=gr;c.fill();
+    c.save();rrp(c,px,py,s,s,r);c.clip();
+    c.strokeStyle='rgba(0,0,0,.55)';c.lineWidth=s*0.12;rrp(c,px-s*0.04,py-s*0.02,s+s*0.08,s+s*0.06,r);c.stroke();c.restore();
+    c.strokeStyle='rgba(255,255,255,.07)';c.lineWidth=1;rrp(c,px+0.5,py+0.5,s-1,s-1,r);c.stroke();
+  }
+  boardLayer=cv2;
+}
+
+// ---------- efeitos ----------
+let particles=[],sweeps=[],flashes=[],drops=new Map(),shake={until:0,mag:0};
+function fxPlace(sd,gx,gy,ci,res){
+  const now=performance.now();
+  for(const[r,c]of sd.cells)drops.set((gy+r)*N+(gx+c),now);
+  if(!res.cleared.length)return;
+  const n=res.rows.length+res.cols.length;
+  res.rows.forEach(i=>sweeps.push({row:true,i,t0:now}));
+  res.cols.forEach(i=>sweeps.push({row:false,i,t0:now}));
+  if(reduceMotion)return;
+  for(const{x,y,c}of res.cleared){
+    const cx=L.bx+(x+.5)*L.cell,cy=L.by+(y+.5)*L.cell;
+    for(let k=0;k<5;k++){
+      const a=Math.random()*Math.PI*2,v=L.cell*(0.04+Math.random()*0.09);
+      particles.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-L.cell*0.08,rot:Math.random()*6,vr:(Math.random()-.5)*0.4,
+        s:L.cell*(0.12+Math.random()*0.16),c:COLORS[c],t0:now+((x+y)%8)*18,life:650+Math.random()*350});
+    }
+    if(Math.random()<.5)particles.push({spark:true,x:cx,y:cy,vx:0,vy:-L.cell*0.02,s:L.cell*0.35,t0:now+80,life:500});
+  }
+  if(particles.length>500)particles.splice(0,particles.length-500);
+  if(n>=2||res.streak>=3){shake={until:now+260+n*60,mag:L.cell*0.05*Math.min(n,4)}}
+  if(res.boardCleared)flashes.push({t0:now+150});
+}
+const easeOutBack=t=>{const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2)};
+
 function snapFor(){
   if(!drag)return null;
   const sd=SHAPE_DATA[st.tray[drag.idx].s];
@@ -219,9 +332,10 @@ function snapFor(){
 }
 function draw(now){
   ctx.clearRect(0,0,L.W,L.H);
-  // frame
-  rr(0,0,L.W,L.W,L.W*0.05);ctx.fillStyle='#c9b392';ctx.fill();
-  rr(L.frame*0.5,L.frame*0.5,L.W-L.frame,L.W-L.frame,L.W*0.04);ctx.fillStyle='#d8c6a8';ctx.fill();
+  ctx.save();
+  if(now<shake.until&&!reduceMotion){const k=(shake.until-now)/400;ctx.translate((Math.random()-.5)*shake.mag*k*2,(Math.random()-.5)*shake.mag*k*2)}
+  if(!boardLayer)buildBoardLayer();
+  ctx.drawImage(boardLayer,0,0,L.W,L.W);
   const snap=snapFor();
   let ghost=null,willClear=new Set();
   if(snap){
@@ -232,14 +346,20 @@ function draw(now){
     cols.forEach(x=>{for(let y=0;y<N;y++)willClear.add(y*N+x)});
     ghost={g,ci};
   }
+  // linhas de cima para baixo: a lateral de cada azulejo fica atrás do azulejo de baixo
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){
-    const px=L.bx+x*L.cell,py=L.by+y*L.cell;
-    rr(px+L.cell*0.05,py+L.cell*0.05,L.cell*0.9,L.cell*0.9,L.cell*0.14);ctx.fillStyle='#e8dbc5';ctx.fill();
+    const px=L.bx+x*L.cell,py=L.by+y*L.cell,k=y*N+x;
     const v=st.grid[y][x];
     if(v>=0){
-      tile(px,py,L.cell,willClear.has(y*N+x)&&ghost?ghost.ci:v);
-      if(willClear.has(y*N+x)){ctx.save();ctx.globalAlpha=.25+.15*Math.sin(now/90);rr(px+L.cell*.05,py+L.cell*.05,L.cell*.9,L.cell*.9,L.cell*.14);ctx.fillStyle='#fff';ctx.fill();ctx.restore()}
-    }else if(ghost&&ghost.g[y][x]>=0){tile(px,py,L.cell,ghost.ci,willClear.has(y*N+x)?.85:.38)}
+      const t0=drops.get(k);
+      if(t0!==undefined&&now-t0<240&&!reduceMotion){
+        const t=Math.max(0,(now-t0)/240),sc=1.22-0.22*easeOutBack(t);
+        ctx.save();ctx.translate(px+L.cell/2,py+L.cell/2);ctx.scale(sc,sc);ctx.translate(-L.cell/2,-L.cell/2-(1-t)*L.cell*0.15);
+        tile(0,0,L.cell,v);ctx.restore();
+      }else{if(t0!==undefined)drops.delete(k);tile(px,py,L.cell,willClear.has(k)&&ghost?ghost.ci:v)}
+      if(willClear.has(k)){ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.18+.14*Math.sin(now/90);
+        rr(px+L.cell*.06,py+L.cell*.06,L.cell*.88,L.cell*.8,L.cell*.17);ctx.fillStyle='#ffd77a';ctx.fill();ctx.restore()}
+    }else if(ghost&&ghost.g[y][x]>=0){tile(px,py,L.cell,ghost.ci,willClear.has(k)?.85:.4)}
   }
   // dica
   const showHint=hintVisible(now);
@@ -247,25 +367,63 @@ function draw(now){
     const h=currentHint(),p=st.tray[h.idx],sd=SHAPE_DATA[p.s],a=.35+.25*Math.sin(now/260);
     for(const[r,c]of sd.cells)tile(L.bx+(h.gx+c)*L.cell,L.by+(h.gy+r)*L.cell,L.cell,p.c,a);
     const sl=L.slots[h.idx];
-    ctx.save();ctx.globalAlpha=.55+.35*Math.sin(now/260);ctx.strokeStyle='#1f4fa3';ctx.lineWidth=3;
-    rr(sl.x-sl.w/2+6,L.trayY+8,sl.w-12,L.trayH-16,14);ctx.stroke();ctx.restore();
+    ctx.save();ctx.globalAlpha=.6+.35*Math.sin(now/260);ctx.strokeStyle='#f1c15a';ctx.lineWidth=2.5;
+    ctx.shadowColor='rgba(241,193,90,.8)';ctx.shadowBlur=12;
+    rr(sl.x-sl.w/2+6,L.trayY+8,sl.w-12,L.trayH-16,16);ctx.stroke();ctx.restore();
   }
   setHintText(showHint);
-  // clear animations
-  anims=anims.filter(a=>{const t=(now-a.t0)/320;if(t<0){tile(L.bx+a.x*L.cell,L.by+a.y*L.cell,L.cell,a.c);return true}if(t>=1)return false;
-    const s=L.cell*(1-t*0.6),off=(L.cell-s)/2;ctx.save();ctx.translate(L.bx+a.x*L.cell+L.cell/2,L.by+a.y*L.cell+L.cell/2);ctx.rotate(t*0.6);
-    tile(-s/2,-s/2-t*L.cell*0.4,s,a.c,1-t);ctx.restore();return true});
-  // tray
+  // azulejos limpos: sobem girando e somem
+  anims=anims.filter(a=>{const t=(now-a.t0)/380;if(t<0){tile(L.bx+a.x*L.cell,L.by+a.y*L.cell,L.cell,a.c);return true}if(t>=1)return false;
+    ctx.save();ctx.translate(L.bx+a.x*L.cell+L.cell/2,L.by+a.y*L.cell+L.cell/2-t*L.cell*0.5);ctx.rotate(t*0.5);const sc=1+t*0.15-t*t*0.7;ctx.scale(sc,sc);
+    tile(-L.cell/2,-L.cell/2,L.cell,a.c,1-t*t);ctx.restore();return true});
+  // faixa de luz que corre pela linha limpa
+  sweeps=sweeps.filter(w=>{const t=(now-w.t0)/450;if(t>=1)return false;
+    ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=Math.sin(t*Math.PI)*0.9;
+    const len=L.bs,pos=-len*0.3+t*len*1.6;
+    if(w.row){const y=L.by+w.i*L.cell;const gr=ctx.createLinearGradient(L.bx+pos-len*0.3,0,L.bx+pos+len*0.3,0);
+      gr.addColorStop(0,'rgba(255,220,140,0)');gr.addColorStop(.5,'rgba(255,240,200,.95)');gr.addColorStop(1,'rgba(255,220,140,0)');
+      ctx.fillStyle=gr;rr(L.bx,y+L.cell*.08,L.bs,L.cell*.84,L.cell*.2);ctx.fill()}
+    else{const x=L.bx+w.i*L.cell;const gr=ctx.createLinearGradient(0,L.by+pos-len*0.3,0,L.by+pos+len*0.3);
+      gr.addColorStop(0,'rgba(255,220,140,0)');gr.addColorStop(.5,'rgba(255,240,200,.95)');gr.addColorStop(1,'rgba(255,220,140,0)');
+      ctx.fillStyle=gr;rr(x+L.cell*.08,L.by,L.cell*.84,L.bs,L.cell*.2);ctx.fill()}
+    ctx.restore();return true});
+  // estilhaços de cerâmica e brilhos
+  particles=particles.filter(p=>{const age=now-p.t0;if(age<0)return true;if(age>p.life)return false;const t=age/p.life;
+    if(p.spark){ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=1-t;const s=p.s*(0.6+t*0.8);
+      const gr=ctx.createRadialGradient(p.x,p.y-t*L.cell*0.3,0,p.x,p.y-t*L.cell*0.3,s);gr.addColorStop(0,'rgba(255,245,210,.9)');gr.addColorStop(1,'rgba(255,200,90,0)');
+      ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y-t*L.cell*0.3,s,0,Math.PI*2);ctx.fill();ctx.restore();return true}
+    p.x+=p.vx;p.y+=p.vy;p.vy+=L.cell*0.006;p.rot+=p.vr;
+    ctx.save();ctx.globalAlpha=1-t*t;ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+    const gr=ctx.createLinearGradient(-p.s/2,-p.s/2,p.s/2,p.s/2);gr.addColorStop(0,p.c.light);gr.addColorStop(1,p.c.dark);
+    ctx.fillStyle=gr;ctx.beginPath();ctx.moveTo(-p.s/2,-p.s*0.3);ctx.lineTo(p.s*0.4,-p.s/2);ctx.lineTo(p.s/2,p.s*0.4);ctx.lineTo(-p.s*0.2,p.s/2);ctx.closePath();ctx.fill();
+    ctx.restore();return true});
+  // clarão de painel limpo
+  flashes=flashes.filter(f=>{const t=(now-f.t0)/700;if(t<0)return true;if(t>=1)return false;
+    ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=(1-t)*0.6;
+    const gr=ctx.createRadialGradient(L.W/2,L.W/2,0,L.W/2,L.W/2,L.W*0.7*(0.4+t));gr.addColorStop(0,'rgba(255,236,180,1)');gr.addColorStop(1,'rgba(255,200,90,0)');
+    ctx.fillStyle=gr;ctx.fillRect(0,0,L.W,L.W);ctx.restore();return true});
+  ctx.restore();
+  // bandeja: cada peça sobre uma sombra suave
   st.tray.forEach((p,i)=>{if(!p||(drag&&drag.idx===i))return;const sl=L.slots[i];
-    const fits=fitsAnywhere(st.grid,SHAPE_DATA[p.s]);drawPiece(p,sl.x,sl.y,L.mini,fits?1:.32)});
-  // dragged
-  if(drag){const p=st.tray[drag.idx];drawPiece(p,drag.x,drag.y-drag.lift,L.cell*0.96,snap?1:.9)}
-  // score pops
-  pops=pops.filter(p=>{const t=(now-p.t0)/900;if(t<0)return true;if(t>=1)return false;
-    ctx.save();ctx.globalAlpha=1-t*t;ctx.textAlign='center';ctx.fillStyle='#fffaf1';ctx.strokeStyle='#1f4fa3';ctx.lineWidth=5;ctx.lineJoin='round';
-    ctx.font=`${Math.round(L.cell*0.62)}px "Bagel Fat One", system-ui`;const y=p.y-t*L.cell*1.2;
-    ctx.strokeText(p.txt,p.x,y);ctx.fillText(p.txt,p.x,y);
-    if(p.sub){ctx.font=`800 ${Math.round(L.cell*0.3)}px Figtree, system-ui`;ctx.lineWidth=4;ctx.strokeStyle='#a7741a';ctx.strokeText(p.sub,p.x,y+L.cell*0.45);ctx.fillText(p.sub,p.x,y+L.cell*0.45)}
+    const fits=fitsAnywhere(st.grid,SHAPE_DATA[p.s]);
+    ctx.save();ctx.globalAlpha=fits?.5:.2;const gr=ctx.createRadialGradient(sl.x,sl.y+L.mini*1.6,0,sl.x,sl.y+L.mini*1.6,L.mini*2.6);
+    gr.addColorStop(0,'rgba(0,0,0,.6)');gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;
+    ctx.beginPath();ctx.ellipse(sl.x,sl.y+L.mini*1.6,L.mini*2.6,L.mini*0.7,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    drawPiece(p,sl.x,sl.y,L.mini,fits?1:.3)});
+  // peça arrastada, "levantada" com sombra maior
+  if(drag){const p=st.tray[drag.idx],s=L.cell*0.98;
+    ctx.save();ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=L.cell*0.5;ctx.shadowOffsetY=L.cell*0.35;
+    drawPiece(p,drag.x,drag.y-drag.lift,s,snap?1:.92);ctx.restore()}
+  // pontos que sobem
+  pops=pops.filter(p=>{const t=(now-p.t0)/1000;if(t<0)return true;if(t>=1)return false;
+    const sc=t<0.15?0.6+t/0.15*0.5:1.1-Math.min(t-0.15,0.1);
+    ctx.save();ctx.globalAlpha=1-Math.pow(t,3);ctx.textAlign='center';ctx.textBaseline='middle';
+    const y=p.y-t*L.cell*1.3;ctx.translate(p.x,y);ctx.scale(sc,sc);
+    ctx.font=`${Math.round(L.cell*0.7)}px "Bagel Fat One", system-ui`;
+    ctx.lineJoin='round';ctx.lineWidth=L.cell*0.14;ctx.strokeStyle='rgba(40,22,0,.85)';ctx.strokeText(p.txt,0,0);
+    const gr=ctx.createLinearGradient(0,-L.cell*0.35,0,L.cell*0.35);gr.addColorStop(0,'#fff6d6');gr.addColorStop(.5,'#f1c15a');gr.addColorStop(1,'#c88a22');
+    ctx.shadowColor='rgba(255,200,90,.8)';ctx.shadowBlur=L.cell*0.4;ctx.fillStyle=gr;ctx.fillText(p.txt,0,0);
+    if(p.sub){ctx.shadowBlur=0;ctx.font=`800 ${Math.round(L.cell*0.32)}px Figtree, system-ui`;ctx.lineWidth=L.cell*0.09;ctx.strokeText(p.sub,0,L.cell*0.55);ctx.fillStyle='#fff';ctx.fillText(p.sub,0,L.cell*0.55)}
     ctx.restore();return true});
   requestAnimationFrame(draw);
 }
@@ -304,7 +462,7 @@ $restart.onclick=()=>{
 };
 document.getElementById('again').onclick=restart;
 const $snd=document.getElementById('sound');
-$snd.onclick=()=>{soundOn=!soundOn;$snd.style.background=soundOn?'var(--cobalt)':'';$snd.style.color=soundOn?'var(--glaze)':'';$snd.setAttribute('aria-label',soundOn?'Desligar som':'Ligar som');tone(660,.08)};
+$snd.onclick=()=>{soundOn=!soundOn;$snd.style.background=soundOn?'linear-gradient(180deg,var(--gold),var(--gold-deep))':'';$snd.style.color=soundOn?'#2a1a05':'';$snd.setAttribute('aria-label',soundOn?'Desligar som':'Ligar som');tone(660,.08)};
 
 function start(){
   st=loadSaved();
@@ -325,7 +483,8 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=
 document.getElementById('installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;$install.hidden=true;layout()};
 document.getElementById('installClose').onclick=()=>{$install.hidden=true;layout();try{localStorage.setItem('azulejo-install-dismissed','1')}catch(e){}};
 window.addEventListener('appinstalled',()=>{$install.hidden=true;layout()});
-window.__azulejo={get state(){return st},get layout(){return L},get hint(){return hintVisible(performance.now())?currentHint():null},touched};
+window.__azulejo={get state(){return st},get layout(){return L},get hint(){return hintVisible(performance.now())?currentHint():null},touched,
+  /** Usado pelo gerador de ícones (scripts/icons.js). */ sprite:(ci,size)=>tileSprite(ci,size)};
 })();
 </script>
 </body>
