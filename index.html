@@ -213,7 +213,8 @@ function layout(){
   ctx.setTransform(dpr,0,0,dpr,0,0);
   const pad=bs*0.051;
   L={W:bs,H:bs+tray,frame:pad,bx:pad,by:pad,bs:bs-2*pad,cell:(bs-2*pad)/N,trayY:bs,trayH:tray};
-  L.slots=[0,1,2].map(i=>({x:bs*(i*2+1)/6,y:bs+tray*0.5,w:bs/3}));
+  L.slots=[0,1,2].map(i=>({x:bs*(i*2+1)/6,y:bs+tray*0.5,w:bs/3,
+    cardW:bs/3-bs*.017,cardH:Math.min(bs*.35,tray*.78)}));
   L.mini=Math.min(L.cell*0.64,tray/5.2);
   boardLayer=null;trayLayer=null;sprites.clear();
 }
@@ -357,9 +358,8 @@ function buildTrayLayer(){
   const dpr=window.devicePixelRatio||1,W=L.W,H=L.trayH;
   trayLayer=makeCanvas(W*dpr,H*dpr);
   const c=trayLayer.getContext('2d');c.scale(dpr,dpr);
-  const center=H*.5,h=Math.min(W*.35,H*.78),top=center-h/2;
   for(const sl of L.slots){
-    const w=sl.w-W*.017,x=sl.x-w/2;
+    const w=sl.cardW,h=sl.cardH,x=sl.x-w/2,top=sl.y-L.trayY-h/2;
     const glaze=c.createLinearGradient(x,top,x+w,top+h);
     glaze.addColorStop(0,'#fffcf1');glaze.addColorStop(.55,'#f9ebcf');glaze.addColorStop(1,'#ead6b0');
     rrp(c,x,top,w,h,W*.033);c.fillStyle=glaze;c.fill();
@@ -457,12 +457,17 @@ function draw(now){
   // dica
   const showHint=hintVisible(now);
   if(showHint){
-    const h=currentHint(),p=st.tray[h.idx],sd=SHAPE_DATA[p.s],a=.35+.25*Math.sin(now/260);
-    for(const[r,c]of sd.cells)tile(L.bx+(h.gx+c)*L.cell,L.by+(h.gy+r)*L.cell,L.cell,p.c,a);
+    const h=currentHint(),p=st.tray[h.idx],sd=SHAPE_DATA[p.s],a=reduceMotion?.46:.46+.10*Math.sin(now/380);
+    ctx.save();ctx.strokeStyle='#fff2c8';ctx.lineWidth=Math.max(1.4,L.cell*.045);ctx.setLineDash([L.cell*.11,L.cell*.07]);
+    for(const[r,c]of sd.cells){
+      const x=L.bx+(h.gx+c)*L.cell,y=L.by+(h.gy+r)*L.cell;
+      tile(x,y,L.cell,p.c,a);
+      rr(x+L.cell*.08,y+L.cell*.07,L.cell*.84,L.cell*.83,L.cell*.12);ctx.stroke();
+    }
+    ctx.restore();
     const sl=L.slots[h.idx];
-    ctx.save();ctx.globalAlpha=.6+.35*Math.sin(now/260);ctx.strokeStyle='#f1c15a';ctx.lineWidth=2.5;
-    ctx.shadowColor='rgba(241,193,90,.8)';ctx.shadowBlur=12;
-    rr(sl.x-sl.w/2+6,L.trayY+8,sl.w-12,L.trayH-16,16);ctx.stroke();ctx.restore();
+    ctx.save();ctx.strokeStyle='#a14c26';ctx.lineWidth=2.5;
+    rr(sl.x-sl.cardW/2,sl.y-sl.cardH/2,sl.cardW,sl.cardH,L.W*.033);ctx.stroke();ctx.restore();
   }
   setHintText(showHint);
   // azulejos limpos: sobem girando e somem
@@ -500,10 +505,8 @@ function draw(now){
   // bandeja: cada peça sobre uma sombra suave
   st.tray.forEach((p,i)=>{if(!p||(drag&&drag.idx===i))return;const sl=L.slots[i];
     const fits=fitsAnywhere(st.grid,SHAPE_DATA[p.s]);
-    ctx.save();ctx.globalAlpha=fits?.5:.2;const gr=ctx.createRadialGradient(sl.x,sl.y+L.mini*1.6,0,sl.x,sl.y+L.mini*1.6,L.mini*2.6);
-    gr.addColorStop(0,'rgba(0,0,0,.6)');gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;
-    ctx.beginPath();ctx.ellipse(sl.x,sl.y+L.mini*1.6,L.mini*2.6,L.mini*0.7,0,0,Math.PI*2);ctx.fill();ctx.restore();
-    drawPiece(p,sl.x,sl.y,L.mini,fits?1:.3)});
+    const sd=SHAPE_DATA[p.s],size=Math.min(L.mini,sl.cardW*.92/sd.w,sl.cardH*.92/sd.h);
+    drawPiece(p,sl.x,sl.y,size,fits?1:.3)});
   // peça arrastada, "levantada" com sombra maior
   if(drag){const p=st.tray[drag.idx],s=L.cell*0.98;
     ctx.save();ctx.shadowColor='rgba(0,0,0,.45)';ctx.shadowBlur=L.cell*0.5;ctx.shadowOffsetY=L.cell*0.35;
@@ -523,7 +526,7 @@ function draw(now){
 }
 
 const $hintText=document.getElementById('hintText');
-const HINT_DEFAULT=$hintText.textContent,HINT_ON='Dica: arraste a peça marcada para o lugar que está piscando no painel.';
+const HINT_DEFAULT=$hintText.textContent,HINT_ON='Dica: leve a peça destacada até o contorno tracejado.';
 let hintShown=false;
 function setHintText(on){if(on!==hintShown){hintShown=on;$hintText.textContent=on?HINT_ON:HINT_DEFAULT;$hintText.classList.toggle('on',on)}}
 document.getElementById('hintBtn').onclick=()=>{if(st.over)return;lastAction=performance.now();hintForced=true};
