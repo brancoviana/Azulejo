@@ -72,13 +72,27 @@ canvas{touch-action:none;display:block;max-width:100%}
 .card .big{font-family:var(--font-body);font-weight:800;font-size:2.8rem;font-variant-numeric:tabular-nums;color:var(--ink);text-shadow:0 0 20px rgba(255,255,255,.25)}
 .play{margin-top:10px;border:0;background:linear-gradient(180deg,#ffe08a,var(--gold) 45%,var(--gold-deep));color:#2a1a05;font:800 1.05rem var(--font-body);padding:13px 26px;border-radius:14px;cursor:pointer;box-shadow:0 5px 0 #7a5418,0 10px 24px rgba(0,0,0,.4)}
 .play:active{transform:translateY(3px);box-shadow:0 2px 0 #7a5418}
+.brand{display:flex;align-items:center;gap:8px}
+.rosette{flex:none;width:22px;height:22px;border:1px solid #edc982;border-radius:5px;background:radial-gradient(circle,#ffe5a6 0 12%,transparent 14%),repeating-conic-gradient(from 45deg,#89cad1 0 45deg,#284c87 45deg 90deg);box-shadow:inset 0 0 0 2px #16295a}
+#combo{display:block;margin-top:4px;font:700 .68rem var(--font-body);color:#ffe19c;letter-spacing:.05em}
+body{background:
+  radial-gradient(ellipse at 15% 4%,#22696c55,transparent 50%),
+  radial-gradient(ellipse at 96% 68%,#44377644,transparent 54%),
+  radial-gradient(circle,#b9e8e510 1px,transparent 1.5px) 0 0/18px 18px,#0c1830}
+header{padding:6px 0;border-bottom:1px solid #e8ca8733}
+.stats{align-items:center;gap:8px}
+.stat{padding:4px 9px;border-left:2px solid #78cecf;background:linear-gradient(90deg,#80dee51a,transparent)}
+.stat.best{border-color:#e5bd64;background:linear-gradient(90deg,#edc8701c,transparent)}
+.stage{align-items:center}
+.toolbar .tool:first-child{color:#a9eee3;border-color:#65c4c35e;background:linear-gradient(#244853,#17323f)}
+@media(max-width:360px){.stats{gap:4px}.stat{padding:3px 5px}.brand{gap:5px}}
 </style>
 
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Azulejo</h1>
+    <div class="brand"><i class="rosette" aria-hidden="true"></i><div><h1>Azulejo</h1><span id="combo" hidden></span></div></div>
     <div class="stats">
       <div class="stat"><span>Pontos</span><b id="score">0</b></div>
       <div class="stat best"><span>Recorde</span><b id="best">0</b></div>
@@ -153,18 +167,22 @@ function place(idx,gx,gy){
   touched();fxPlace(sd,gx,gy,pc,res);
   const now=performance.now();
   if(res.cleared.length){
-    res.cleared.forEach(({x,y,c})=>anims.push({x,y,c,t0:now+((x+y)%8)*22}));
     const n=res.rows.length+res.cols.length;
     const cx=L.bx+(gx+sd.w/2)*L.cell,cy=L.by+(gy+sd.h/2)*L.cell;
     pops.push({x:cx,y:cy,txt:'+'+res.lineScore,sub:res.streak>1?'Sequência ×'+Math.min(res.streak,L_.MAX_STREAK):(n>1?n+' linhas':''),t0:now});
     tone(523+n*80,.12,'sine');setTimeout(()=>tone(659+n*80,.14,'sine'),70);
     if(res.boardCleared)pops.push({x:L.bx+L.bs/2,y:L.by+L.bs/2,txt:'Painel limpo! +'+L_.BOARD_CLEAR_BONUS,sub:'',t0:now+200});
-  }else tone(330,.06,'square',.03);
+  }else{tone(490,.075,'triangle',.055);tone(980,.045,'sine',.022)}
   if(st.score>best){best=st.score;try{localStorage.setItem('azulejo-best',best)}catch(e){}}
   updateHud();save();
   if(res.over)showOver();
 }
-function updateHud(){$score.textContent=st.score;$best.textContent=best}
+function updateHud(){
+  $score.textContent=st.score;$best.textContent=best;
+  const badge=document.getElementById('combo');
+  badge.hidden=!(st.streak>1);
+  if(!badge.hidden)badge.textContent='Sequência ×'+Math.min(st.streak,L_.MAX_STREAK);
+}
 
 // ---------- audio ----------
 function tone(f,d,type='sine',vol=.06){
@@ -191,7 +209,7 @@ function layout(){
   L={W:bs,H:bs+tray,frame:pad,bx:pad,by:pad,bs:bs-2*pad,cell:(bs-2*pad)/N,trayY:bs,trayH:tray};
   L.slots=[0,1,2].map(i=>({x:bs*(i*2+1)/6,y:bs+tray*0.5,w:bs/3}));
   L.mini=Math.min(L.cell*0.64,tray/5.2);
-  boardLayer=null;sprites.clear();
+  boardLayer=null;trayLayer=null;sprites.clear();
 }
 
 // ---------- drawing ----------
@@ -199,10 +217,27 @@ function layout(){
 // lateral, sombra, bisel, esmalte e brilho; depois só é copiado. Assim o relevo fica rico e leve.
 const reduceMotion=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 const sprites=new Map();
-let boardLayer=null;
+let boardLayer=null,trayLayer=null;
 function rrp(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
 function rr(x,y,w,h,r){rrp(ctx,x,y,w,h,r)}
 function makeCanvas(w,h){const c=document.createElement('canvas');c.width=Math.max(1,Math.ceil(w));c.height=Math.max(1,Math.ceil(h));return c}
+
+// Estampas de majólica, no mesmo sistema de coordenadas (-10 a 10).
+// Silhuetas largas para continuar legíveis nas miniaturas da bandeja.
+const stamps=[
+  // Rosácea de quatro pétalas.
+  'M0 -4 C-7 -14 -13 -4 -4 0 C-14 7 -4 13 0 4 C7 14 13 4 4 0 C14 -7 4 -13 0 -4 Z',
+  // Sol de oito raios.
+  'M0 -10 L2 -6 7 -7 6 -2 10 0 6 2 7 7 2 6 0 10 -2 6 -7 7 -6 2 -10 0 -6 -2 -7 -7 -2 -6 Z',
+  // Folha com nervura vazada.
+  'M-8 8 Q-12 -7 9 -9 Q11 10 -8 8 Z M-6 6 Q0 3 6 -6 Q0 -2 -6 6 Z',
+  // Losango vazado.
+  'M0 -10 L9 0 0 10 -9 0 Z M0 -4 L-3.5 0 0 4 3.5 0 Z',
+  // Duas ondas.
+  'M-9 -4 Q-5 -10 0 -6 T9 -7 L9 -3 Q5 2 0 -2 T-9 0 Z M-9 3 Q-5 -3 0 1 T9 0 L9 4 Q5 9 0 5 T-9 7 Z',
+  // Lua crescente.
+  'M5 -9 A9.5 9.5 0 1 0 8 6 A8.5 8.5 0 0 1 5 -9 Z'
+].map(d=>new Path2D(d));
 
 function tileSprite(ci,size){
   const dpr=window.devicePixelRatio||1,key=ci+'|'+Math.round(size*dpr*4);
@@ -236,21 +271,16 @@ function tileSprite(ci,size){
   gr=c.createLinearGradient(0,y,0,y+top);gr.addColorStop(0,'rgba(255,255,255,.75)');gr.addColorStop(0.35,'rgba(255,255,255,.12)');gr.addColorStop(1,'rgba(0,0,0,.28)');
   c.strokeStyle=gr;c.lineWidth=Math.max(1,s*0.035);c.stroke();c.restore();
   // desenho do azulejo, em baixo-relevo esmaltado
-  const cx=x+s/2,cy=y+top/2,m=s*0.15;
+  const cx=x+s/2,cy=y+top/2;
   c.save();c.translate(0,s*0.012);c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=Math.max(1,s*0.03);
   rrp(c,x+s*0.15,y+top*0.15,s*0.7,top*0.7,r*0.55);c.stroke();c.restore();
   c.strokeStyle='rgba(255,255,255,.42)';c.lineWidth=Math.max(1,s*0.028);
   rrp(c,x+s*0.15,y+top*0.15,s*0.7,top*0.7,r*0.55);c.stroke();
-  c.save();c.shadowColor='rgba(0,0,0,.35)';c.shadowBlur=s*0.035;c.shadowOffsetY=s*0.025;
-  for(const[dx,dy]of[[0,-1],[1,0],[0,1],[-1,0]]){
-    const px=cx+dx*m*0.78,py=cy+dy*m*0.78;
-    gr=c.createRadialGradient(px-m*0.2,py-m*0.25,0,px,py,m*0.62);
-    gr.addColorStop(0,'#ffffff');gr.addColorStop(0.7,'#f5ecdc');gr.addColorStop(1,'#d9cbb2');
-    c.fillStyle=gr;c.beginPath();c.arc(px,py,m*0.58,0,Math.PI*2);c.fill();
-  }
+  c.save();c.translate(cx,cy);c.scale(s*.024,s*.024);
+  gr=c.createLinearGradient(-4,-9,4,9);gr.addColorStop(0,'#fffdf0');gr.addColorStop(1,'#ecd8af');
+  c.lineJoin='round';c.lineWidth=1.5;c.strokeStyle=C.deep;c.stroke(stamps[ci]);
+  c.fillStyle=gr;c.fill(stamps[ci],'evenodd');
   c.restore();
-  gr=c.createRadialGradient(cx-m*0.12,cy-m*0.15,0,cx,cy,m*0.45);gr.addColorStop(0,'#fff');gr.addColorStop(0.35,C.light);gr.addColorStop(1,C.dark);
-  c.fillStyle=gr;c.beginPath();c.arc(cx,cy,m*0.42,0,Math.PI*2);c.fill();
   // reflexo pontual
   c.save();c.globalAlpha=.85;gr=c.createRadialGradient(x+s*0.2,y+top*0.16,0,x+s*0.2,y+top*0.16,s*0.09);
   gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=gr;
@@ -281,10 +311,10 @@ function buildBoardLayer(){
   gr.addColorStop(0,'#ffe7a3');gr.addColorStop(0.25,'#e2a93f');gr.addColorStop(0.5,'#a8721f');gr.addColorStop(0.75,'#f0c463');gr.addColorStop(1,'#8a5b17');
   rrp(c,W*0.01,W*0.005,W*0.98,W*0.975,R);c.fillStyle=gr;c.fill();
   const inset=L.frame*0.55;
-  rrp(c,inset,inset,W-2*inset,W-2*inset,R*0.8);
-  gr=c.createLinearGradient(0,inset,0,W-inset);gr.addColorStop(0,'#0e1c42');gr.addColorStop(1,'#182d63');
+  rrp(c,inset,inset,W-2*inset,W*.98-2*inset,R*0.8);
+  gr=c.createLinearGradient(0,inset,W,W-inset);gr.addColorStop(0,'#294d60');gr.addColorStop(.52,'#16364c');gr.addColorStop(1,'#242e52');
   c.fillStyle=gr;c.fill();
-  c.save();rrp(c,inset,inset,W-2*inset,W-2*inset,R*0.8);c.clip();
+  c.save();rrp(c,inset,inset,W-2*inset,W*.98-2*inset,R*0.8);c.clip();
   c.shadowColor='rgba(0,0,0,.8)';c.shadowBlur=W*0.03;c.shadowOffsetY=W*0.008;c.lineWidth=W*0.02;c.strokeStyle='rgba(0,0,0,.6)';
   rrp(c,inset-W*0.01,inset-W*0.01,W-2*inset+W*0.02,W-2*inset+W*0.02,R*0.8);c.stroke();c.restore();
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){
@@ -298,6 +328,24 @@ function buildBoardLayer(){
   boardLayer=cv2;
 }
 
+// A bandeja e seus filetes são pintados uma vez por tamanho de tela.
+function buildTrayLayer(){
+  const dpr=window.devicePixelRatio||1,W=L.W,H=L.trayH;
+  trayLayer=makeCanvas(W*dpr,H*dpr);
+  const c=trayLayer.getContext('2d');c.scale(dpr,dpr);
+  const center=H*.5,h=Math.min(W*.35,H*.78),top=center-h/2;
+  for(const sl of L.slots){
+    const w=sl.w-W*.017,x=sl.x-w/2;
+    const glaze=c.createLinearGradient(x,top,x+w,top+h);
+    glaze.addColorStop(0,'#264653');glaze.addColorStop(.55,'#172f45');glaze.addColorStop(1,'#16253e');
+    rrp(c,x,top,w,h,W*.033);c.fillStyle=glaze;c.fill();
+    c.lineWidth=1;c.strokeStyle='#78aba667';c.stroke();
+    rrp(c,x+3,top+3,w-6,h-6,W*.027);c.strokeStyle='#9bc9bb23';c.stroke();
+    // Pequeno losango de latão embutido na borda, como numa peça de marcenaria.
+    c.save();c.translate(sl.x,top);c.rotate(Math.PI/4);c.fillStyle='#e6c380';c.fillRect(-2,-2,4,4);c.restore();
+  }
+}
+
 // ---------- efeitos ----------
 let particles=[],sweeps=[],flashes=[],drops=new Map(),shake={until:0,mag:0};
 function fxPlace(sd,gx,gy,ci,res){
@@ -307,16 +355,20 @@ function fxPlace(sd,gx,gy,ci,res){
   const n=res.rows.length+res.cols.length;
   res.rows.forEach(i=>sweeps.push({row:true,i,t0:now}));
   res.cols.forEach(i=>sweeps.push({row:false,i,t0:now}));
-  if(reduceMotion)return;
   for(const{x,y,c}of res.cleared){
+    const step=Math.min(res.rows.includes(y)?x:N,res.cols.includes(x)?y:N);
+    const t0=now+(reduceMotion?0:(.3+(step+.5)/N)/1.6*450);
+    anims.push({x,y,c,t0});
+    if(reduceMotion)continue;
     const cx=L.bx+(x+.5)*L.cell,cy=L.by+(y+.5)*L.cell;
     for(let k=0;k<5;k++){
       const a=Math.random()*Math.PI*2,v=L.cell*(0.04+Math.random()*0.09);
       particles.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v-L.cell*0.08,rot:Math.random()*6,vr:(Math.random()-.5)*0.4,
-        s:L.cell*(0.12+Math.random()*0.16),c:COLORS[c],t0:now+((x+y)%8)*18,life:650+Math.random()*350});
+        s:L.cell*(0.12+Math.random()*0.16),c:COLORS[c],t0,life:650+Math.random()*350});
     }
-    if(Math.random()<.5)particles.push({spark:true,x:cx,y:cy,vx:0,vy:-L.cell*0.02,s:L.cell*0.35,t0:now+80,life:500});
+    if(Math.random()<.5)particles.push({spark:true,x:cx,y:cy,s:L.cell*0.35,t0,life:500});
   }
+  if(reduceMotion)return;
   if(particles.length>500)particles.splice(0,particles.length-500);
   if(n>=2||res.streak>=3){shake={until:now+260+n*60,mag:L.cell*0.05*Math.min(n,4)}}
   if(res.boardCleared)flashes.push({t0:now+150});
@@ -332,6 +384,8 @@ function snapFor(){
 }
 function draw(now){
   ctx.clearRect(0,0,L.W,L.H);
+  if(!trayLayer)buildTrayLayer();
+  ctx.drawImage(trayLayer,0,L.trayY,L.W,L.trayH);
   ctx.save();
   if(now<shake.until&&!reduceMotion){const k=(shake.until-now)/400;ctx.translate((Math.random()-.5)*shake.mag*k*2,(Math.random()-.5)*shake.mag*k*2)}
   if(!boardLayer)buildBoardLayer();
@@ -356,7 +410,22 @@ function draw(now){
         const t=Math.max(0,(now-t0)/240),sc=1.22-0.22*easeOutBack(t);
         ctx.save();ctx.translate(px+L.cell/2,py+L.cell/2);ctx.scale(sc,sc);ctx.translate(-L.cell/2,-L.cell/2-(1-t)*L.cell*0.15);
         tile(0,0,L.cell,v);ctx.restore();
-      }else{if(t0!==undefined)drops.delete(k);tile(px,py,L.cell,willClear.has(k)&&ghost?ghost.ci:v)}
+      }else tile(px,py,L.cell,willClear.has(k)&&ghost?ghost.ci:v);
+      if(t0!==undefined){
+        const t=Math.max(0,(now-t0)/400);
+        if(t>=1)drops.delete(k);
+        else{
+          ctx.save();rr(px+L.cell*.07,py+L.cell*.06,L.cell*.86,L.cell*.78,L.cell*.16);
+          ctx.strokeStyle='#fff3cd';ctx.lineWidth=Math.max(1,L.cell*.045);ctx.globalAlpha=.8*(1-t);ctx.stroke();
+          if(!reduceMotion){
+            ctx.clip();const d=(t*1.8-.4)*L.cell;
+            const gl=ctx.createLinearGradient(px+d,py,px+d+L.cell*.32,py+L.cell*.12);
+            gl.addColorStop(0,'transparent');gl.addColorStop(.5,'#fff7da');gl.addColorStop(1,'transparent');
+            ctx.fillStyle=gl;ctx.fillRect(px,py,L.cell,L.cell);
+          }
+          ctx.restore();
+        }
+      }
       if(willClear.has(k)){ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.18+.14*Math.sin(now/90);
         rr(px+L.cell*.06,py+L.cell*.06,L.cell*.88,L.cell*.8,L.cell*.17);ctx.fillStyle='#ffd77a';ctx.fill();ctx.restore()}
     }else if(ghost&&ghost.g[y][x]>=0){tile(px,py,L.cell,ghost.ci,willClear.has(k)?.85:.4)}
@@ -374,7 +443,8 @@ function draw(now){
   setHintText(showHint);
   // azulejos limpos: sobem girando e somem
   anims=anims.filter(a=>{const t=(now-a.t0)/380;if(t<0){tile(L.bx+a.x*L.cell,L.by+a.y*L.cell,L.cell,a.c);return true}if(t>=1)return false;
-    ctx.save();ctx.translate(L.bx+a.x*L.cell+L.cell/2,L.by+a.y*L.cell+L.cell/2-t*L.cell*0.5);ctx.rotate(t*0.5);const sc=1+t*0.15-t*t*0.7;ctx.scale(sc,sc);
+    const m=reduceMotion?0:t;
+    ctx.save();ctx.translate(L.bx+a.x*L.cell+L.cell/2,L.by+a.y*L.cell+L.cell/2-m*L.cell*0.5);ctx.rotate(m*0.5);const sc=1+m*0.15-m*m*0.7;ctx.scale(sc,sc);
     tile(-L.cell/2,-L.cell/2,L.cell,a.c,1-t*t);ctx.restore();return true});
   // faixa de luz que corre pela linha limpa
   sweeps=sweeps.filter(w=>{const t=(now-w.t0)/450;if(t>=1)return false;
@@ -392,8 +462,8 @@ function draw(now){
     if(p.spark){ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=1-t;const s=p.s*(0.6+t*0.8);
       const gr=ctx.createRadialGradient(p.x,p.y-t*L.cell*0.3,0,p.x,p.y-t*L.cell*0.3,s);gr.addColorStop(0,'rgba(255,245,210,.9)');gr.addColorStop(1,'rgba(255,200,90,0)');
       ctx.fillStyle=gr;ctx.beginPath();ctx.arc(p.x,p.y-t*L.cell*0.3,s,0,Math.PI*2);ctx.fill();ctx.restore();return true}
-    p.x+=p.vx;p.y+=p.vy;p.vy+=L.cell*0.006;p.rot+=p.vr;
-    ctx.save();ctx.globalAlpha=1-t*t;ctx.translate(p.x,p.y);ctx.rotate(p.rot);
+    const frames=age*.06;
+    ctx.save();ctx.globalAlpha=1-t*t;ctx.translate(p.x+p.vx*frames,p.y+p.vy*frames+L.cell*.003*frames*frames);ctx.rotate(p.rot+p.vr*frames);
     const gr=ctx.createLinearGradient(-p.s/2,-p.s/2,p.s/2,p.s/2);gr.addColorStop(0,p.c.light);gr.addColorStop(1,p.c.dark);
     ctx.fillStyle=gr;ctx.beginPath();ctx.moveTo(-p.s/2,-p.s*0.3);ctx.lineTo(p.s*0.4,-p.s/2);ctx.lineTo(p.s/2,p.s*0.4);ctx.lineTo(-p.s*0.2,p.s/2);ctx.closePath();ctx.fill();
     ctx.restore();return true});
@@ -450,7 +520,7 @@ function endDrag(){if(!drag)return;const s=snapFor();const idx=drag.idx;drag=nul
 cv.addEventListener('pointerup',endDrag);
 cv.addEventListener('pointercancel',()=>{drag=null});
 
-function restart(){st=newState();deal();anims=[];pops=[];drag=null;$over.hidden=true;touched();updateHud();save()}
+function restart(){st=newState();deal();anims=[];pops=[];particles=[];flashes=[];sweeps=[];drops.clear();shake.until=0;drag=null;$over.hidden=true;touched();updateHud();save()}
 // Recomeçar no meio da partida pede um segundo toque, para não perder o jogo salvo sem querer.
 const $restart=document.getElementById('restart');let armTimer=0;
 const RESTART_LABEL=$restart.textContent;
