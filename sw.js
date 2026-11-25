@@ -2,11 +2,12 @@
 'use strict';
 
 // Mude a versão ao adicionar ou remover arquivos da lista.
-const CACHE = 'azulejo-v2';
+const CACHE = 'azulejo-v3';
 const FILES = [
   './',
   'index.html',
   'logic.js',
+  'mirror.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',

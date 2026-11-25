@@ -93,6 +93,16 @@ header{padding:3px 0 6px;border-bottom:1px solid #284a7238}
 .hint.on{color:#904522}.over .card{background:#fffaec}.card h2{background:none;color:#225283}
 @media(max-width:360px){.stats{gap:4px}.stat{padding:3px 5px}.brand{gap:5px}}
 </style>
+<style>
+#mirror{position:fixed;inset:0;z-index:5;background:#faf2df;color:#19375a;overflow:auto;padding:12px;box-sizing:border-box;text-align:center}
+#mirror .sheet{max-width:420px;margin:auto}
+#mirror h2{font:400 2rem var(--font-display);color:#225283;margin:.3em 0}
+#mirror p{min-height:2.4em;margin:.5em 0}
+#mirrorBoard{display:block;width:min(100%,58vh);height:auto;margin:auto;touch-action:none;border-radius:16px}
+#mirrorPiece{touch-action:none;display:inline-grid;place-items:center;background:#fff7de;border:2px solid #967644;border-radius:14px;padding:8px;min-width:90px;min-height:60px;cursor:grab}
+#mirrorPiece svg{display:block;height:45px;width:70px;pointer-events:none}
+#mirror .actions{display:flex;justify-content:center;gap:8px;margin:10px 0}
+</style>
 
 </head>
 <body>
@@ -120,6 +130,7 @@ header{padding:3px 0 6px;border-bottom:1px solid #284a7238}
   <div class="toolbar">
     <button class="tool" id="hintBtn">Dica</button>
     <button class="tool" id="restart">↻ Novo jogo</button>
+    <button class="tool" id="openMirror">◇ Espelho</button>
   </div>
   <div class="install" id="install" hidden>
     <span>Instale o Azulejo e jogue offline.</span>
@@ -129,6 +140,15 @@ header{padding:3px 0 6px;border-bottom:1px solid #284a7238}
 </div>
 
 <script src="logic.js"></script>
+<section id="mirror" hidden aria-label="Modo Espelho"><div class="sheet">
+  <span class="atelier">Ateliê de mosaicos · Protótipo</span><h2>Painel Espelho</h2>
+  <strong id="mirrorRound"></strong>
+  <p id="mirrorMsg" aria-live="polite"></p>
+  <canvas id="mirrorBoard" width="400" height="400" aria-label="Painel espelhado de oito por oito"></canvas>
+  <div class="actions"><button id="mirrorPiece" aria-label="Arrastar peça ou selecionar para tocar no painel"><svg viewBox="0 0 60 60" aria-hidden="true"></svg></button></div>
+  <div class="actions"><button class="tool" id="closeMirror">Voltar ao Clássico</button><button class="tool" id="nextMirror" hidden></button></div>
+</div></section>
+<script defer src="mirror.js"></script>
 <script>
 (()=>{
 const L_=window.AzulejoLogic;

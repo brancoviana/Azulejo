@@ -20,6 +20,8 @@ Abra o link no celular, baixe o arquivo e toque nele para instalar. Na primeira 
 
 ## Recursos
 
+**Espelho (protótipo):** o botão **◇ Espelho** abre três desafios independentes do Clássico. Arraste a peça ou selecione-a e toque no painel. A prévia tracejada é a cópia refletida pelo eixo vertical. Os dois encaixes devem estar livres e fechar a coluna dourada. Tentativas não consomem a peça. Volte ao Clássico a qualquer momento sem mudar sua partida ou recorde.
+
 - **A partida fica salva.** Fechar ou recarregar a página não perde o jogo.
 - **Dica.** O botão "Dica" mostra uma jogada possível. A dica também aparece sozinha depois de 8 segundos sem jogar.
 - **Novo jogo pede confirmação.** No meio de uma partida, o botão "Novo jogo" precisa de dois toques.

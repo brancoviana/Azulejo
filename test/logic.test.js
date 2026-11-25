@@ -364,3 +364,18 @@ test('findMove acha a jogada escondida das partidas reportadas (L amarelo no can
   const m = A.findMove(st);
   assert.deepEqual([m.idx, m.gx, m.gy], [1, 0, 0]);
 });
+test('Espelho: cada painel admite uma vitória pela cópia; colisões e cruzamento rejeitados', () => {
+  const {rounds,panel,project}=require('../mirror.js');
+  for(const round of rounds){
+    const g=panel(round);let possible=false;
+    for(let y=0;y<8;y++)for(let x=0;x<4;x++){
+      const {valid,cells}=project(g,round.shape,x,y);
+      if(!valid||cells.some(([i],k)=>!(k%2)&&i===round.col))continue;
+      const trial=g.map(r=>r.slice());cells.forEach(([i,j])=>trial[j][i]=round.color);
+      if(trial.every(row=>row[round.col]>=0))possible=true;
+    }
+    assert.ok(possible);
+    assert.equal(project(g,0,7-round.col,0).valid,false);
+    assert.equal(project(g,1,3,3).valid,false);
+  }
+});
