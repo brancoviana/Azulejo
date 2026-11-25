@@ -113,11 +113,11 @@ test('jogo no navegador', { skip: !chromium && 'Playwright não instalado' }, as
     await page.click('#openMirror');
     const board=await page.locator('#mirrorBoard').boundingBox();
     const pos=(x,y)=>[board.x+board.width*x/8,board.y+board.height*y/8];
+    await page.mouse.click(...pos(.5,2.5)); // primeiro gesto direto no L-guia
+    await page.click('#nextMirror');
     const tray=await page.locator('#mirrorPiece').boundingBox();
     await page.mouse.move(tray.x+tray.width/2,tray.y+tray.height/2);
-    await page.mouse.down();await page.mouse.move(...pos(1,3),{steps:8});await page.mouse.up();
-    await page.click('#nextMirror');
-    await page.click('#mirrorPiece');await page.mouse.click(...pos(2.5,3));
+    await page.mouse.down();await page.mouse.move(...pos(2.5,3),{steps:8});await page.mouse.up();
     await page.click('#nextMirror');
     await page.click('#mirrorPiece');await page.mouse.click(...pos(2.5,5));
     assert.match(await page.textContent('#mirrorMsg'),/três painéis/);
