@@ -7,7 +7,7 @@ val webRoot = rootProject.projectDir.parentFile
 val webAssets = layout.buildDirectory.dir("generated/web-assets")
 val copyWebAssets by tasks.registering(Sync::class) {
     from(webRoot) {
-        include("index.html", "logic.js", "mirror.js", "manifest.webmanifest", "icons/**", "fonts/**")
+        include("index.html", "logic.js", "queda.html", "queda.js", "manifest.webmanifest", "icons/**", "fonts/**")
     }
     into(webAssets.map { it.dir("www") })
 }

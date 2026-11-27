@@ -20,9 +20,7 @@ Abra o link no celular, baixe o arquivo e toque nele para instalar. Na primeira 
 
 ## Recursos
 
-**Fornada:** modo opcional com partida e recorde próprios. Cada linha ou coluna limpa com pelo menos cinco azulejos da mesma estampa dá +10 pontos extras. Ao arrastar, os azulejos da maioria ganham um contorno dourado. No primeiro tabuleiro, experimente aproximar o sol e depois a folha da lacuna na quinta linha.
-
-**Espelho (protótipo):** o botão **◇ Espelho** abre três desafios independentes do Clássico. No primeiro, toque em qualquer casa do L tracejado à esquerda para ver o reflexo fechar a coluna dourada. Depois, arraste a peça ou toque diretamente no painel para posicionar o centro dela. Os dois encaixes devem estar livres. Tentativas não consomem a peça. Volte ao Clássico a qualquer momento sem mudar sua partida ou recorde.
+**Coleção:** no cabeçalho, toque em **Escolher jogo** para continuar o Clássico ou abrir **Blocos em Queda**. Use as setas para mover, **Girar** para orientar e **Soltar** para encaixar na sombra. Linhas horizontais completas somem. Cada jogo tem partida e recorde próprios. A Queda pausa quando o aplicativo sai de primeiro plano.
 
 - **A partida fica salva.** Fechar ou recarregar a página não perde o jogo.
 - **Dica.** O botão "Dica" mostra uma jogada possível. A dica também aparece sozinha depois de 8 segundos sem jogar.

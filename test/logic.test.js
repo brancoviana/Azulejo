@@ -9,14 +9,11 @@ const H2 = shapeIndex(['##']);
 const H5 = shapeIndex(['#####']);
 const SQ3 = shapeIndex(['###', '###', '###']);
 
-test('Fornada: a mesma lacuna vale +10 só com maioria e só no modo opcional',()=>{
-  for(const [color,kiln,expected] of [[1,true,21],[2,true,11],[1,false,11]]){
-    const s=A.newState();s.grid[4]=[1,5,1,5,1,5,1,-1];s.grid[7][1]=0;
-    s.tray=[{s:ONE,c:color},{s:ONE,c:0},null];
-    const g=s.grid.map(r=>r.slice());g[4][7]=color;
-    assert.equal(A.firing(g,[4],[]).marks.size,color===1?5:0);
-    assert.equal(A.place(s,0,7,4,Math.random,kiln).gained,expected);
-  }
+test('Queda: peça fixa, limpa a linha e conserva as casas da linha acima',()=>{
+  const Q=require('../queda.js'),s=Q.fresh();
+  s.grid[13].fill(2);s.grid[13][0]=0;s.grid[12][5]=4;s.p={c:1,x:0,y:13,cells:[[0,0]]};
+  assert.equal(Q.move(s,-1,0),false);Q.step(s);assert.equal(s.lines,1);assert.equal(s.score,26);
+  assert.equal(s.grid[13][5],4);assert.equal(s.grid[13][0],0);
 });
 
 /** Estado com bandeja fixa (peças em `shapes`), cor 0. */
@@ -373,19 +370,4 @@ test('findMove acha a jogada escondida das partidas reportadas (L amarelo no can
   assert.equal(A.isGameOver(st), false);
   const m = A.findMove(st);
   assert.deepEqual([m.idx, m.gx, m.gy], [1, 0, 0]);
-});
-test('Espelho: cada painel admite uma vitória pela cópia; colisões e cruzamento rejeitados', () => {
-  const {rounds,panel,project}=require('../mirror.js');
-  for(const round of rounds){
-    const g=panel(round);let possible=false;
-    for(let y=0;y<8;y++)for(let x=0;x<4;x++){
-      const {valid,cells}=project(g,round.shape,x,y);
-      if(!valid||cells.some(([i],k)=>!(k%2)&&i===round.col))continue;
-      const trial=g.map(r=>r.slice());cells.forEach(([i,j])=>trial[j][i]=round.color);
-      if(trial.every(row=>row[round.col]>=0))possible=true;
-    }
-    assert.ok(possible);
-    assert.equal(project(g,0,7-round.col,0).valid,false);
-    assert.equal(project(g,1,3,3).valid,false);
-  }
 });

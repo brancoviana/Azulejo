@@ -107,33 +107,15 @@ test('jogo no navegador', { skip: !chromium && 'Playwright não instalado' }, as
     await page.close();
   });
 
-  await t.test('Espelho: arrastar, completar três painéis e voltar à mesma partida', async () => {
+  await t.test('coleção salva Queda separadamente e retoma em pausa',async()=>{
     const {page,errors}=await open({width:360,height:640});
-    const before=await snapshot(page);
-    await page.click('#openMirror');
-    const board=await page.locator('#mirrorBoard').boundingBox();
-    const pos=(x,y)=>[board.x+board.width*x/8,board.y+board.height*y/8];
-    await page.mouse.click(...pos(.5,2.5)); // primeiro gesto direto no L-guia
-    await page.click('#nextMirror');
-    const tray=await page.locator('#mirrorPiece').boundingBox();
-    await page.mouse.move(tray.x+tray.width/2,tray.y+tray.height/2);
-    await page.mouse.down();await page.mouse.move(...pos(2.5,3),{steps:8});await page.mouse.up();
-    await page.click('#nextMirror');
-    await page.click('#mirrorPiece');await page.mouse.click(...pos(2.5,5));
-    assert.match(await page.textContent('#mirrorMsg'),/três painéis/);
-    await page.click('#closeMirror');assert.equal(await snapshot(page),before);
+    await page.click('#collectionBtn');await page.click('a[href="queda.html"]');
+    await page.click('#play');await page.click('[data-act="drop"]');await page.click('#play');
+    const score=await page.textContent('#score');assert.ok(Number(score)>0);
+    await page.click('a[href="index.html"]');await ready(page);assert.equal(await page.textContent('#score'),'0');
+    await page.click('#collectionBtn');await page.click('a[href="queda.html"]');
+    assert.equal(await page.textContent('#score'),score);assert.equal(await page.textContent('#play'),'Continuar');
     assert.deepEqual(errors,[]);await page.close();
-  });
-
-  await t.test('Fornada: bônus e partida salvos sem alterar o Clássico',async()=>{
-    const {page}=await open({width:360,height:640});
-    const classic=await snapshot(page);
-    await page.click('#kilnMode');await page.waitForFunction(()=>document.querySelector('h1').textContent==='Fornada');await ready(page);
-    await dragPiece(page,0,7,4);assert.equal(await page.textContent('#score'),'21');
-    await page.click('#kilnMode');await page.waitForFunction(()=>document.querySelector('h1').textContent==='Azulejo');await ready(page);
-    assert.equal(await snapshot(page),classic);
-    await page.click('#kilnMode');await page.waitForFunction(()=>document.querySelector('#score').textContent==='21');
-    assert.equal(await page.textContent('#best'),'21');await page.close();
   });
 
   await t.test('completar uma linha limpa o painel e mostra a pontuação', async () => {

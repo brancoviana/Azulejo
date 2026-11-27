@@ -2,12 +2,13 @@
 'use strict';
 
 // Mude a versão ao adicionar ou remover arquivos da lista.
-const CACHE = 'azulejo-v3';
+const CACHE = 'azulejo-v5';
 const FILES = [
   './',
   'index.html',
   'logic.js',
-  'mirror.js',
+  'queda.html',
+  'queda.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
   'icons/icon-512.png',
@@ -36,15 +37,16 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  const key=req.mode==='navigate'?(new URL(req.url).pathname.endsWith('/queda.html')?'queda.html':'index.html'):req;
   event.respondWith(
     fetch(req)
       .then(res => {
         if (res.ok) {
           const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(req.mode === 'navigate' ? 'index.html' : req, copy));
+          caches.open(CACHE).then(c => c.put(key, copy));
         }
         return res;
       })
-      .catch(() => caches.match(req.mode === 'navigate' ? 'index.html' : req, { ignoreSearch: true }))
+      .catch(() => caches.match(key, { ignoreSearch: true }))
   );
 });

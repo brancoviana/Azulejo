@@ -1,0 +1,11 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#faf2df"><title>Blocos em Queda · Azulejo</title>
+<style>
+@font-face{font-family:Bagel;src:url(fonts/BagelFatOne-latin.woff2)}@font-face{font-family:Figtree;src:url(fonts/Figtree-latin.woff2)}
+*{box-sizing:border-box}body{margin:0;background:#faf2df;color:#19375a;font:16px Figtree,system-ui;text-align:center}main{max-width:450px;margin:auto;padding:8px 12px}header,nav,.controls{display:flex;align-items:center;justify-content:space-between;gap:5px}h1{font:clamp(20px,6vw,32px) Bagel,system-ui;margin:4px 0}button,a{border:1px solid #a69272;background:#fff9eb;border-radius:12px;color:#244c72;padding:7px 10px;font:700 .92rem Figtree,system-ui;cursor:pointer;min-height:44px;text-decoration:none;touch-action:manipulation}a{display:grid;place-items:center}nav{justify-content:center;font-size:.94rem;margin:4px}.controls>*{flex:1}canvas{width:min(100%,36vh);height:auto;display:block;margin:6px auto;border:4px solid #bb934b;border-radius:8px;background:#24485e;touch-action:none}p{margin:6px;min-height:1.4em}#play{background:#265b88;color:white;margin-bottom:4px}button:disabled{opacity:.58}
+</style><main>
+<header><h1>Blocos em Queda</h1><a href="index.html">Voltar ao Clássico</a></header>
+<nav aria-label="Placar">Pontos: <b id="score">0</b> · Recorde: <b id="best">0</b> · Linhas: <b id="lines">0</b></nav>
+<canvas id="board" width="320" height="560" aria-label="Painel de oito colunas e catorze linhas"></canvas>
+<button id="play">Começar</button>
+<div class="controls"><button data-act="left" aria-label="Mover à esquerda">←</button><button data-act="turn">Girar</button><button data-act="right" aria-label="Mover à direita">→</button><button data-act="drop">Soltar ↓</button></div>
+<p id="msg" aria-live="polite"></p></main><script src="queda.js"></script></html>

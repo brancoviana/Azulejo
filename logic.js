@@ -119,22 +119,7 @@
    * Coloca a peça `idx` da bandeja em (gx, gy). Muda `state` e devolve o que aconteceu,
    * ou null se a jogada é inválida.
    */
-  function firing(grid,rows,cols){
-    const marks=new Set();let bonus=0;
-    function inspect(keys){
-      const counts=Array(COLOR_COUNT).fill(0);
-      const color=k=>grid[Math.floor(k/N)][k%N];
-      keys.forEach(k=>counts[color(k)]++);
-      const majority=counts.findIndex(n=>n>N/2);
-      if(majority<0)return;
-      bonus+=10;keys.forEach(k=>{if(color(k)===majority)marks.add(k)});
-    }
-    rows.forEach(y=>inspect(Array.from({length:N},(_,x)=>y*N+x)));
-    cols.forEach(x=>inspect(Array.from({length:N},(_,y)=>y*N+x)));
-    return {bonus,marks};
-  }
-
-  function place(state, idx, gx, gy, rng = Math.random, kiln=false) {
+  function place(state, idx, gx, gy, rng = Math.random) {
     const piece = state.tray[idx];
     if (!piece || state.over) return null;
     const sd = SHAPE_DATA[piece.s];
@@ -146,7 +131,6 @@
     let gained = sd.cells.length;
     const { rows, cols } = linesFor(state.grid);
     const lines = rows.length + cols.length;
-    const bonus=kiln?firing(state.grid,rows,cols).bonus:0;
     const cleared = [];
     let lines_ = 0, boardCleared = false;
 
@@ -170,13 +154,12 @@
       state.streak = 0;
     }
 
-    gained+=bonus;
     state.score += gained;
     const dealt = state.tray.every(p => !p);
     if (dealt) deal(state, rng);
     state.over = isGameOver(state);
 
-    return { gained, bonus, lineScore: lines_, rows, cols, cleared, boardCleared, dealt, streak: state.streak, over: state.over };
+    return { gained, lineScore: lines_, rows, cols, cleared, boardCleared, dealt, streak: state.streak, over: state.over };
   }
 
   /**
@@ -245,7 +228,7 @@
   }
 
   return {
-    N, COLOR_COUNT, MAX_STREAK, BOARD_CLEAR_BONUS, SHAPES, SHAPE_DATA, firing,
+    N, COLOR_COUNT, MAX_STREAK, BOARD_CLEAR_BONUS, SHAPES, SHAPE_DATA,
     DIFFICULTY_MAX_SCORE, SAVE_VERSION,
     shapeCells, emptyGrid, newState, canPlace, fitsAnywhere, linesFor, lineScore,
     difficulty, pieceWeight, randPiece, deal, isGameOver, findMove, place, serialize, restore, seededRng,
