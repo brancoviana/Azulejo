@@ -125,6 +125,17 @@ test('jogo no navegador', { skip: !chromium && 'Playwright não instalado' }, as
     assert.deepEqual(errors,[]);await page.close();
   });
 
+  await t.test('Fornada: bônus e partida salvos sem alterar o Clássico',async()=>{
+    const {page}=await open({width:360,height:640});
+    const classic=await snapshot(page);
+    await page.click('#kilnMode');await page.waitForFunction(()=>document.querySelector('h1').textContent==='Fornada');await ready(page);
+    await dragPiece(page,0,7,4);assert.equal(await page.textContent('#score'),'21');
+    await page.click('#kilnMode');await page.waitForFunction(()=>document.querySelector('h1').textContent==='Azulejo');await ready(page);
+    assert.equal(await snapshot(page),classic);
+    await page.click('#kilnMode');await page.waitForFunction(()=>document.querySelector('#score').textContent==='21');
+    assert.equal(await page.textContent('#best'),'21');await page.close();
+  });
+
   await t.test('completar uma linha limpa o painel e mostra a pontuação', async () => {
     const { page } = await open();
     await page.evaluate(() => {

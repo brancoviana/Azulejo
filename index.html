@@ -131,6 +131,7 @@ header{padding:3px 0 6px;border-bottom:1px solid #284a7238}
     <button class="tool" id="hintBtn">Dica</button>
     <button class="tool" id="restart">↻ Novo jogo</button>
     <button class="tool" id="openMirror">◇ Espelho</button>
+    <button class="tool" id="kilnMode">Fornada</button>
   </div>
   <div class="install" id="install" hidden>
     <span>Instale o Azulejo e jogue offline.</span>
@@ -168,7 +169,8 @@ const $score=document.getElementById('score'),$best=document.getElementById('bes
 const $over=document.getElementById('over'),$final=document.getElementById('final'),$finalBest=document.getElementById('finalBest');
 
 let st; // game state
-let best=0; try{best=+localStorage.getItem('azulejo-best')||0}catch(e){}
+const kiln=location.hash==='#fornada',bestKey=kiln?'azulejo-fornada-best':'azulejo-best';
+let best=0; try{best=+localStorage.getItem(bestKey)||0}catch(e){}
 let L={}; // layout
 let drag=null, anims=[], pops=[], soundOn=false, audio=null;
 // Dica: aparece sozinha depois de HINT_DELAY ms sem jogar, ou na hora pelo botão "Dica".
@@ -178,28 +180,40 @@ function touched(){lastAction=performance.now();hintForced=false;stateVer++}
 function currentHint(){if(hintVer!==stateVer){hintCache=st.over?null:L_.findMove(st);hintVer=stateVer}return hintCache}
 function hintVisible(now){return !drag&&!st.over&&$over.hidden&&(hintForced||now-lastAction>HINT_DELAY)&&!!currentHint()}
 
-const SAVE_KEY='azulejo-game';
+const SAVE_KEY=kiln?'azulejo-fornada-game':'azulejo-game';
+document.getElementById('kilnMode').onclick=()=>{save();location.hash=kiln?'':'fornada';location.reload()};
+if(kiln){
+  document.querySelector('h1').textContent='Fornada';
+  document.getElementById('kilnMode').textContent='Voltar ao Clássico';
+  document.getElementById('openMirror').hidden=true;
+  document.getElementById('hintText').textContent='Complete uma linha ou coluna com 5 estampas iguais para ganhar +10.';
+}
 function save(){try{if(st.over)localStorage.removeItem(SAVE_KEY);else localStorage.setItem(SAVE_KEY,L_.serialize(st))}catch(e){}}
 function loadSaved(){try{const t=localStorage.getItem(SAVE_KEY);return t?L_.restore(t):null}catch(e){return null}}
 function newState(){return L_.newState()}
-function deal(){L_.deal(st)}
+function deal(){
+  if(kiln&&!st.score){
+    st.grid[4]=[1,5,1,5,1,5,1,-1];st.grid[7][1]=0;
+    st.tray=[{s:0,c:1},{s:0,c:2},{s:13,c:4}];
+  }else L_.deal(st);
+}
 function showOver(){
   setTimeout(()=>{$final.textContent=st.score;$finalBest.textContent=st.score>=best&&st.score>0?'Novo recorde!':'Recorde: '+best;$over.hidden=false;tone(196,.25,'triangle')},450);
 }
 function place(idx,gx,gy){
   const sd=SHAPE_DATA[st.tray[idx].s],pc=st.tray[idx].c;
-  const res=L_.place(st,idx,gx,gy);
+  const res=L_.place(st,idx,gx,gy,Math.random,kiln);
   if(!res)return;
   touched();fxPlace(sd,gx,gy,pc,res);
   const now=performance.now();
   if(res.cleared.length){
     const n=res.rows.length+res.cols.length;
     const cx=L.bx+(gx+sd.w/2)*L.cell,cy=L.by+(gy+sd.h/2)*L.cell;
-    pops.push({x:cx,y:cy,txt:'+'+res.lineScore,sub:res.streak>1?'Sequência ×'+Math.min(res.streak,L_.MAX_STREAK):(n>1?n+' linhas':''),t0:now});
+    pops.push({x:res.bonus?Math.max(L.bx+L.cell,Math.min(cx,L.bx+L.bs-L.cell)):cx,y:cy,txt:'+'+(res.lineScore+res.bonus),sub:res.bonus?'Fornada +'+res.bonus:res.streak>1?'Sequência ×'+Math.min(res.streak,L_.MAX_STREAK):(n>1?n+' linhas':''),t0:now});
     tone(523+n*80,.12,'sine');setTimeout(()=>tone(659+n*80,.14,'sine'),70);
     if(res.boardCleared)pops.push({x:L.bx+L.bs/2,y:L.by+L.bs/2,txt:'Painel limpo! +'+L_.BOARD_CLEAR_BONUS,sub:'',t0:now+200});
   }else{tone(490,.075,'triangle',.055);tone(980,.045,'sine',.022)}
-  if(st.score>best){best=st.score;try{localStorage.setItem('azulejo-best',best)}catch(e){}}
+  if(st.score>best){best=st.score;try{localStorage.setItem(bestKey,best)}catch(e){}}
   updateHud();save();
   if(res.over)showOver();
 }
@@ -442,7 +456,7 @@ function draw(now){
     const{rows,cols}=linesFor(g);
     rows.forEach(y=>{for(let x=0;x<N;x++)willClear.add(y*N+x)});
     cols.forEach(x=>{for(let y=0;y<N;y++)willClear.add(y*N+x)});
-    ghost={g,ci};
+    ghost={g,ci,marks:kiln?L_.firing(g,rows,cols).marks:null};
   }
   // linhas de cima para baixo: a lateral de cada azulejo fica atrás do azulejo de baixo
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){
@@ -454,7 +468,7 @@ function draw(now){
         const t=Math.max(0,(now-t0)/240),sc=1.22-0.22*easeOutBack(t);
         ctx.save();ctx.translate(px+L.cell/2,py+L.cell/2);ctx.scale(sc,sc);ctx.translate(-L.cell/2,-L.cell/2-(1-t)*L.cell*0.15);
         tile(0,0,L.cell,v);ctx.restore();
-      }else tile(px,py,L.cell,willClear.has(k)&&ghost?ghost.ci:v);
+      }else tile(px,py,L.cell,!kiln&&willClear.has(k)&&ghost?ghost.ci:v);
       if(t0!==undefined){
         const t=Math.max(0,(now-t0)/400);
         if(t>=1)drops.delete(k);
@@ -473,6 +487,10 @@ function draw(now){
       if(willClear.has(k)){ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.18+.14*Math.sin(now/90);
         rr(px+L.cell*.06,py+L.cell*.06,L.cell*.88,L.cell*.8,L.cell*.17);ctx.fillStyle='#ffd77a';ctx.fill();ctx.restore()}
     }else if(ghost&&ghost.g[y][x]>=0){tile(px,py,L.cell,ghost.ci,willClear.has(k)?.85:.4)}
+    if(ghost?.marks?.has(k)){
+      ctx.save();ctx.strokeStyle='#fff0a1';ctx.lineWidth=L.cell*.065;ctx.shadowColor='#ffb732';ctx.shadowBlur=L.cell*.17;
+      rr(px+L.cell*.07,py+L.cell*.06,L.cell*.86,L.cell*.84,L.cell*.12);ctx.stroke();ctx.restore();
+    }
   }
   // dica
   const h=drag?drag.hint:(hintVisible(now)?currentHint():null);

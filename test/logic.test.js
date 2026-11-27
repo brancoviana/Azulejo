@@ -9,6 +9,16 @@ const H2 = shapeIndex(['##']);
 const H5 = shapeIndex(['#####']);
 const SQ3 = shapeIndex(['###', '###', '###']);
 
+test('Fornada: a mesma lacuna vale +10 só com maioria e só no modo opcional',()=>{
+  for(const [color,kiln,expected] of [[1,true,21],[2,true,11],[1,false,11]]){
+    const s=A.newState();s.grid[4]=[1,5,1,5,1,5,1,-1];s.grid[7][1]=0;
+    s.tray=[{s:ONE,c:color},{s:ONE,c:0},null];
+    const g=s.grid.map(r=>r.slice());g[4][7]=color;
+    assert.equal(A.firing(g,[4],[]).marks.size,color===1?5:0);
+    assert.equal(A.place(s,0,7,4,Math.random,kiln).gained,expected);
+  }
+});
+
 /** Estado com bandeja fixa (peças em `shapes`), cor 0. */
 function stateWith(shapes, fill = []) {
   const st = A.newState();
