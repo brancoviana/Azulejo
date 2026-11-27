@@ -1,2 +1,2 @@
 # Pendências
-Validar no Android se os botões e a velocidade inicial da Queda são confortáveis e se o jogador retorna por vontade própria. Agente: assistente principal (GPT-6.2 Astra).
+Validar no Android a descoberta do seletor, a leitura do pouso tracejado e o conforto dos controles da Queda. Agente: assistente principal (GPT-6.2 Astra).

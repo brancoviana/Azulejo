@@ -2,9 +2,19 @@
 <style>
 @font-face{font-family:Bagel;src:url(fonts/BagelFatOne-latin.woff2)}@font-face{font-family:Figtree;src:url(fonts/Figtree-latin.woff2)}
 *{box-sizing:border-box}body{margin:0;background:#faf2df;color:#19375a;font:16px Figtree,system-ui;text-align:center}main{max-width:450px;margin:auto;padding:8px 12px}header,nav,.controls{display:flex;align-items:center;justify-content:space-between;gap:5px}h1{font:clamp(20px,6vw,32px) Bagel,system-ui;margin:4px 0}button,a{border:1px solid #a69272;background:#fff9eb;border-radius:12px;color:#244c72;padding:7px 10px;font:700 .92rem Figtree,system-ui;cursor:pointer;min-height:44px;text-decoration:none;touch-action:manipulation}a{display:grid;place-items:center}nav{justify-content:center;font-size:.94rem;margin:4px}.controls>*{flex:1}canvas{width:min(100%,36vh);height:auto;display:block;margin:6px auto;border:4px solid #bb934b;border-radius:8px;background:#24485e;touch-action:none}p{margin:6px;min-height:1.4em}#play{background:#265b88;color:white;margin-bottom:4px}button:disabled{opacity:.58}
+body{background:radial-gradient(ellipse at 12% 12%,#ffdfa8aa,transparent 48%),radial-gradient(ellipse at 90% 80%,#bedac899,transparent 55%),#faf2df}
+header{padding:5px 0 4px;text-align:left;border-bottom:1px solid #bbaa8966}
+.eyebrow{display:block;font-size:.62rem;text-transform:uppercase;letter-spacing:.18em;color:#954528;font-weight:800}
+header a{font-size:.83rem;background:#fff8e9}
+nav{gap:0;border-radius:12px;background:#fff9eb;border:1px solid #c9b690;margin:7px auto;width:min(100%,340px);padding:4px 0}
+nav span{flex:1;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase}nav span+span{border-left:1px solid #c9b690}nav b{display:block;font-size:1.16rem;color:#214e77;line-height:1.12}#best{color:#9a472b}
+canvas{box-sizing:content-box;width:min(calc(100% - 24px),calc((100dvh - 244px)*.56));max-width:315px;border:5px solid #d2ad64;background:#284a60;border-radius:12px;box-shadow:0 0 0 1px #886d41,0 4px 0 #a58a59,0 8px 14px #72582a33}
+.controls button{box-shadow:0 2px #c8b693}.controls [data-act="drop"]{background:#265b88;color:white}.controls button:not(:disabled):active{transform:translateY(2px);box-shadow:none}
+#msg{font-size:.85rem}#play{margin-top:4px}
+@media(max-height:470px){canvas{width:135px}}
 </style><main>
-<header><h1>Blocos em Queda</h1><a href="index.html">Voltar ao Clássico</a></header>
-<nav aria-label="Placar">Pontos: <b id="score">0</b> · Recorde: <b id="best">0</b> · Linhas: <b id="lines">0</b></nav>
+<header><div><span class="eyebrow">Ateliê de mosaicos</span><h1>Blocos em Queda</h1></div><a href="index.html">‹ Clássico</a></header>
+<nav aria-label="Placar"><span>Pontos<b id="score">0</b></span><span>Recorde<b id="best">0</b></span><span>Linhas<b id="lines">0</b></span></nav>
 <canvas id="board" width="320" height="560" aria-label="Painel de oito colunas e catorze linhas"></canvas>
 <button id="play">Começar</button>
 <div class="controls"><button data-act="left" aria-label="Mover à esquerda">←</button><button data-act="turn">Girar</button><button data-act="right" aria-label="Mover à direita">→</button><button data-act="drop">Soltar ↓</button></div>
